@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V5
+.Trashes
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Claude Code
+.claude/
+
+# WordPress dev artifacts
+*.log
+node_modules/
+vendor/
+
+# Build / ZIP output
+*.zip

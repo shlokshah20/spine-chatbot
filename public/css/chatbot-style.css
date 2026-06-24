@@ -1,0 +1,1032 @@
+/**
+ * Spine HR Chatbot — Frontend Widget Styles  (v1.1)
+ * Modern glassmorphic SaaS design, fully responsive
+ *
+ * v1.1 additions:
+ *   - .spine-chat__branch-panel  (4-option initial routing panel)
+ *   - .spine-chat__branch-btn    (card-style branch buttons; --support variant; --loading state)
+ *   - .spine-chat__input-area--locked  (before branch selection)
+ *   - .spine-chat__input-area--frozen  (support branch / session closed)
+ *   - .spine-msg__link           (mailto & learn-more anchors inside bot bubbles)
+ *   - .spine-chat__agent-offer   (Talk to an Agent / Leave Details inline offer)
+ *   - .spine-chat__btn--sm       (smaller button variant)
+ *   - .spine-chat__status-dot--online / --pending  (extended status dot variants)
+ *
+ * @version 1.1.0
+ */
+
+/* ── Custom Properties ─────────────────────────────────────────────────────── */
+:root {
+  --spine-accent:       #1d4ed8;
+  --spine-primary:      #0891b2;
+  --spine-accent-dark:  #1e40af;
+  --spine-white:        #ffffff;
+  --spine-gray-50:      #f9fafb;
+  --spine-gray-100:     #f3f4f6;
+  --spine-gray-200:     #e5e7eb;
+  --spine-gray-400:     #9ca3af;
+  --spine-gray-600:     #4b5563;
+  --spine-gray-800:     #1f2937;
+  --spine-shadow-lg:    0 20px 60px rgba(0,0,0,.18), 0 4px 16px rgba(0,0,0,.08);
+  --spine-shadow-btn:   0 4px 14px rgba(29,78,216,.4);
+  --spine-radius:       20px;
+  --spine-radius-msg:   14px;
+  --spine-font:         -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --spine-w:            380px;
+  --spine-h:            580px;
+  --spine-z:            999999;
+  --spine-offset:       24px;
+  --spine-transition:   .28s cubic-bezier(.4,0,.2,1);
+}
+
+/* ── Root container ────────────────────────────────────────────────────────── */
+.spine-chat {
+  position: fixed;
+  bottom: var(--spine-offset);
+  right:  var(--spine-offset);
+  z-index: var(--spine-z);
+  font-family: var(--spine-font);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--spine-gray-800);
+  -webkit-font-smoothing: antialiased;
+}
+
+.spine-chat--bottom-left {
+  right: unset;
+  left: var(--spine-offset);
+}
+
+/* ── Launcher Button ───────────────────────────────────────────────────────── */
+.spine-chat__launcher {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--spine-accent) 0%, var(--spine-primary) 100%);
+  box-shadow: var(--spine-shadow-btn), 0 0 0 0 rgba(29,78,216,.5);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    transform var(--spine-transition),
+    box-shadow var(--spine-transition);
+  animation: spine-pulse-ring 3s ease infinite;
+  outline: none;
+}
+
+.spine-chat__launcher:hover {
+  transform: scale(1.08);
+  box-shadow: var(--spine-shadow-btn), 0 0 0 8px rgba(29,78,216,.12);
+}
+
+.spine-chat__launcher:focus-visible {
+  outline: 3px solid var(--spine-accent);
+  outline-offset: 3px;
+}
+
+.spine-chat__launcher-icon,
+.spine-chat__launcher-close {
+  width: 28px;
+  height: 28px;
+  transition: opacity var(--spine-transition), transform var(--spine-transition);
+  position: absolute;
+}
+
+.spine-chat__launcher-close {
+  opacity: 0;
+  transform: rotate(90deg) scale(.6);
+}
+
+.spine-chat__launcher-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  transition: opacity var(--spine-transition);
+}
+
+/* When chat is open — swap icons */
+.spine-chat.spine-chat--open .spine-chat__launcher-icon,
+.spine-chat.spine-chat--open .spine-chat__launcher-img {
+  opacity: 0;
+  transform: scale(.6);
+}
+
+.spine-chat.spine-chat--open .spine-chat__launcher-close {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+/* Unread badge */
+.spine-chat__unread-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 20px;
+  height: 20px;
+  background: #ef4444;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: spine-bounce .5s ease;
+}
+
+/* ── Chat Window ───────────────────────────────────────────────────────────── */
+.spine-chat__window {
+  position: absolute;
+  bottom: 72px;
+  right: 0;
+  width: var(--spine-w);
+  max-height: var(--spine-h);
+  background: var(--spine-white);
+  border-radius: var(--spine-radius);
+  box-shadow: var(--spine-shadow-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform-origin: bottom right;
+  /* Default state — hidden via HTML hidden attr; this sets the visual starting point */
+  transform: scale(.92) translateY(16px);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--spine-transition),
+    opacity var(--spine-transition);
+  will-change: transform, opacity;
+}
+
+.spine-chat--bottom-left .spine-chat__window {
+  right: unset;
+  left: 0;
+  transform-origin: bottom left;
+}
+
+/* Open state — driven by root class (widget visible = hidden attr removed + open class added) */
+.spine-chat--open .spine-chat__window {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Legacy class-based open state (backward compat with any external code) */
+.spine-chat__window.spine-chat__window--open {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ── Header ────────────────────────────────────────────────────────────────── */
+.spine-chat__header {
+  background: linear-gradient(135deg, var(--spine-accent) 0%, var(--spine-primary) 100%);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.spine-chat__header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0; right: 0;
+  height: 1px;
+  background: rgba(255,255,255,.15);
+}
+
+.spine-chat__header-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.15);
+  backdrop-filter: blur(8px);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spine-chat__header-avatar svg { width: 24px; height: 24px; }
+
+.spine-chat__header-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.spine-chat__header-name {
+  display: block;
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spine-chat__header-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: rgba(255,255,255,.8);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.spine-chat__status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 0 2px rgba(74,222,128,.3);
+  animation: spine-status-pulse 2s ease infinite;
+  flex-shrink: 0;
+}
+
+/* Status dot variants */
+.spine-chat__status-dot--online  { background: #4ade80; }
+.spine-chat__status-dot--pending { background: #fb923c; animation: spine-status-pulse-orange 1.4s ease infinite; }
+.spine-chat__status-dot--away    { background: #facc15; }
+.spine-chat__status-dot--offline { background: #9ca3af; animation: none; }
+
+.spine-chat__header-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.spine-chat__header-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,.15);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--spine-transition);
+  padding: 0;
+}
+
+.spine-chat__header-btn:hover { background: rgba(255,255,255,.28); }
+.spine-chat__header-btn svg { width: 16px; height: 16px; }
+
+/* ── Messages ──────────────────────────────────────────────────────────────── */
+.spine-chat__messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+}
+
+.spine-chat__messages::-webkit-scrollbar { width: 4px; }
+.spine-chat__messages::-webkit-scrollbar-track { background: transparent; }
+.spine-chat__messages::-webkit-scrollbar-thumb { background: var(--spine-gray-200); border-radius: 4px; }
+
+/* Message bubble */
+.spine-msg {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  animation: spine-msg-in .25s cubic-bezier(.4,0,.2,1);
+  max-width: 100%;
+}
+
+.spine-msg--user { flex-direction: row-reverse; }
+
+.spine-msg__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--spine-accent), var(--spine-primary));
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.spine-msg__avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.spine-msg__bubble {
+  max-width: 78%;
+  padding: 10px 13px;
+  border-radius: var(--spine-radius-msg);
+  font-size: 13.5px;
+  line-height: 1.55;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+/* Bot / Agent bubble */
+.spine-msg--bot  .spine-msg__bubble,
+.spine-msg--agent .spine-msg__bubble {
+  background: var(--spine-gray-100);
+  color: var(--spine-gray-800);
+  border-bottom-left-radius: 4px;
+}
+
+/* User bubble */
+.spine-msg--user .spine-msg__bubble {
+  background: linear-gradient(135deg, var(--spine-accent), var(--spine-primary));
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.spine-msg__bubble strong { font-weight: 700; display: block; margin-bottom: 2px; }
+.spine-msg__bubble ul { margin: 4px 0 0 14px; padding: 0; }
+.spine-msg__bubble li { margin-bottom: 2px; }
+
+.spine-msg__time {
+  font-size: 10.5px;
+  color: var(--spine-gray-400);
+  margin-top: 3px;
+  display: block;
+  text-align: right;
+}
+
+.spine-msg--bot  .spine-msg__time,
+.spine-msg--agent .spine-msg__time { text-align: left; }
+
+.spine-msg__agent-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--spine-primary);
+  margin-bottom: 3px;
+  display: block;
+}
+
+/* ── Links inside bot messages (mailto, learn-more) ─────────────────────────
+   Server-generated <a> tags from format_answer() and the support branch.     */
+.spine-msg__bubble a,
+.spine-msg__link {
+  color: var(--spine-accent);
+  text-decoration: underline;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.spine-msg--bot .spine-msg__bubble a:hover { color: var(--spine-accent-dark); }
+
+/* User bubble links — white on gradient */
+.spine-msg--user .spine-msg__bubble a { color: rgba(255,255,255,.9); }
+
+/* System message */
+.spine-msg--system {
+  justify-content: center;
+}
+
+.spine-msg--system .spine-msg__bubble {
+  background: transparent;
+  color: var(--spine-gray-400);
+  font-size: 11.5px;
+  text-align: center;
+  padding: 4px 8px;
+  max-width: 90%;
+}
+
+/* ── Typing Indicator ──────────────────────────────────────────────────────── */
+.spine-chat__typing {
+  padding: 6px 14px 4px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.spine-chat__typing span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--spine-gray-400);
+  animation: spine-typing 1.2s ease infinite;
+}
+
+.spine-chat__typing span:nth-child(2) { animation-delay: .2s; }
+.spine-chat__typing span:nth-child(3) { animation-delay: .4s; }
+
+/* ── Branch-Select Panel ───────────────────────────────────────────────────── */
+.spine-chat__branch-panel {
+  padding: 10px 14px 14px;
+  flex-shrink: 0;
+  border-top: 1px solid var(--spine-gray-100);
+}
+
+.spine-chat__branch-heading {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--spine-gray-400);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin: 0 0 10px;
+}
+
+.spine-chat__branch-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* ── Branch Button ─────────────────────────────────────────────────────────── */
+.spine-chat__branch-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px 12px 10px;
+  border-radius: 12px;
+  border: 1.5px solid var(--spine-gray-200);
+  background: var(--spine-gray-50);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color var(--spine-transition),
+    background var(--spine-transition),
+    transform var(--spine-transition),
+    box-shadow var(--spine-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.spine-chat__branch-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--spine-accent), var(--spine-primary));
+  opacity: 0;
+  transition: opacity var(--spine-transition);
+}
+
+.spine-chat__branch-btn:hover {
+  border-color: var(--spine-accent);
+  background: #eff6ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(29,78,216,.15);
+}
+
+.spine-chat__branch-btn:hover .spine-chat__branch-label,
+.spine-chat__branch-btn:hover .spine-chat__branch-icon svg { color: var(--spine-accent); }
+
+.spine-chat__branch-btn:focus-visible {
+  outline: 3px solid var(--spine-accent);
+  outline-offset: 2px;
+}
+
+/* Support branch — orange tint to differentiate */
+.spine-chat__branch-btn--support {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.spine-chat__branch-btn--support:hover {
+  border-color: #f97316;
+  background: #fff7ed;
+  box-shadow: 0 4px 12px rgba(249,115,22,.15);
+}
+
+.spine-chat__branch-btn--support:hover .spine-chat__branch-label,
+.spine-chat__branch-btn--support:hover .spine-chat__branch-icon svg { color: #ea580c; }
+
+/* Loading state while AJAX is in flight */
+.spine-chat__branch-btn--loading {
+  opacity: .6;
+  cursor: wait;
+  pointer-events: none;
+}
+
+.spine-chat__branch-btn--loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,.4);
+  animation: spine-shimmer 1s linear infinite;
+}
+
+/* Branch icon */
+.spine-chat__branch-icon {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.spine-chat__branch-icon svg {
+  width: 20px;
+  height: 20px;
+  color: var(--spine-gray-600);
+  transition: color var(--spine-transition);
+}
+
+/* Branch label */
+.spine-chat__branch-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--spine-gray-800);
+  line-height: 1.2;
+  transition: color var(--spine-transition);
+}
+
+/* Branch description */
+.spine-chat__branch-desc {
+  font-size: 11px;
+  color: var(--spine-gray-400);
+  line-height: 1.4;
+  display: block;
+}
+
+/* ── Quick Replies ─────────────────────────────────────────────────────────── */
+.spine-chat__quick-replies {
+  padding: 6px 14px 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.spine-quick-reply {
+  padding: 6px 13px;
+  border-radius: 20px;
+  border: 1.5px solid var(--spine-accent);
+  background: transparent;
+  color: var(--spine-accent);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--spine-transition),
+    color var(--spine-transition);
+  white-space: nowrap;
+  font-family: var(--spine-font);
+}
+
+.spine-quick-reply:hover {
+  background: var(--spine-accent);
+  color: #fff;
+}
+
+/* ── Alternatives Panel ────────────────────────────────────────────────────── */
+.spine-chat__alternatives {
+  padding: 6px 14px 10px;
+}
+
+.spine-alt-title {
+  font-size: 12px;
+  color: var(--spine-gray-400);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.spine-alt-item {
+  width: 100%;
+  text-align: left;
+  padding: 10px 13px;
+  border-radius: 10px;
+  border: 1.5px solid var(--spine-gray-200);
+  background: var(--spine-gray-50);
+  cursor: pointer;
+  margin-bottom: 6px;
+  transition: border-color var(--spine-transition), background var(--spine-transition);
+  display: block;
+  font-family: var(--spine-font);
+}
+
+.spine-alt-item:hover {
+  border-color: var(--spine-accent);
+  background: #eff6ff;
+}
+
+.spine-alt-item--agent {
+  border-color: var(--spine-gray-200);
+  color: var(--spine-accent);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.spine-alt-item__label {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--spine-gray-800);
+  display: block;
+}
+
+.spine-alt-item__preview {
+  font-size: 12px;
+  color: var(--spine-gray-400);
+  margin-top: 2px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Agent / Lead Offer (inline CTA row) ──────────────────────────────────── */
+.spine-chat__agent-offer {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0 2px;
+  flex-wrap: wrap;
+  animation: spine-msg-in .25s cubic-bezier(.4,0,.2,1);
+}
+
+/* ── Lead Form ─────────────────────────────────────────────────────────────── */
+.spine-chat__lead-form {
+  padding: 12px 14px 4px;
+  border-top: 1px solid var(--spine-gray-100);
+}
+
+.spine-chat__lead-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--spine-gray-800);
+  margin: 0 0 4px;
+}
+
+.spine-chat__lead-sub {
+  font-size: 12px;
+  color: var(--spine-gray-400);
+  margin: 0 0 12px;
+}
+
+.spine-chat__field {
+  margin-bottom: 9px;
+}
+
+.spine-chat__field label {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--spine-gray-600);
+  margin-bottom: 4px;
+}
+
+.spine-chat__field input,
+.spine-chat__field textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid var(--spine-gray-200);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: var(--spine-font);
+  color: var(--spine-gray-800);
+  background: var(--spine-white);
+  transition: border-color var(--spine-transition), box-shadow var(--spine-transition);
+  box-sizing: border-box;
+  resize: none;
+  outline: none;
+}
+
+.spine-chat__field input:focus,
+.spine-chat__field textarea:focus {
+  border-color: var(--spine-accent);
+  box-shadow: 0 0 0 3px rgba(29,78,216,.12);
+}
+
+.spine-chat__field-error {
+  display: block;
+  font-size: 11px;
+  color: #ef4444;
+  margin-top: 3px;
+}
+
+.spine-chat__lead-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────────────── */
+.spine-chat__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition:
+    background var(--spine-transition),
+    transform var(--spine-transition),
+    box-shadow var(--spine-transition);
+  text-decoration: none;
+  outline: none;
+  font-family: var(--spine-font);
+}
+
+.spine-chat__btn--primary {
+  background: linear-gradient(135deg, var(--spine-accent), var(--spine-primary));
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(29,78,216,.3);
+  flex: 1;
+  justify-content: center;
+}
+
+.spine-chat__btn--primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(29,78,216,.4);
+}
+
+.spine-chat__btn--secondary {
+  background: var(--spine-gray-50);
+  color: var(--spine-gray-600);
+  border: 1.5px solid var(--spine-gray-200);
+  flex: 1;
+  justify-content: center;
+}
+
+.spine-chat__btn--secondary:hover {
+  background: var(--spine-gray-100);
+}
+
+/* Small button variant — used in the inline agent/lead offer row */
+.spine-chat__btn--sm {
+  padding: 7px 12px;
+  font-size: 12.5px;
+  border-radius: 8px;
+  flex: unset;
+}
+
+.spine-chat__btn svg { width: 14px; height: 14px; }
+
+/* ── Input Area ────────────────────────────────────────────────────────────── */
+.spine-chat__input-area {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--spine-gray-100);
+  background: var(--spine-white);
+  flex-shrink: 0;
+  transition: background var(--spine-transition);
+}
+
+.spine-chat__input {
+  flex: 1;
+  border: 1.5px solid var(--spine-gray-200);
+  border-radius: 12px;
+  padding: 9px 13px;
+  font-size: 13.5px;
+  font-family: var(--spine-font);
+  color: var(--spine-gray-800);
+  background: var(--spine-gray-50);
+  resize: none;
+  outline: none;
+  max-height: 100px;
+  overflow-y: auto;
+  transition: border-color var(--spine-transition), box-shadow var(--spine-transition);
+  line-height: 1.5;
+}
+
+.spine-chat__input::placeholder { color: var(--spine-gray-400); }
+
+.spine-chat__input:focus {
+  border-color: var(--spine-accent);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(29,78,216,.1);
+}
+
+/* Locked state — before a branch is selected */
+.spine-chat__input-area--locked {
+  background: var(--spine-gray-50);
+}
+
+.spine-chat__input-area--locked .spine-chat__input {
+  background: var(--spine-gray-100);
+  border-color: var(--spine-gray-200);
+  cursor: not-allowed;
+  color: var(--spine-gray-400);
+}
+
+.spine-chat__input-area--locked .spine-chat__input::placeholder { color: var(--spine-gray-400); }
+.spine-chat__input-area--locked .spine-chat__input:focus { border-color: var(--spine-gray-200); box-shadow: none; }
+
+/* Frozen state — support branch or session closed; visually distinct & permanent */
+.spine-chat__input-area--frozen {
+  background: #f9fafb;
+  border-top: 1px solid #f1f5f9;
+  opacity: .7;
+}
+
+.spine-chat__input-area--frozen .spine-chat__input {
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+  font-style: italic;
+  color: var(--spine-gray-400);
+}
+
+.spine-chat__input-area--frozen .spine-chat__input::placeholder { color: var(--spine-gray-400); font-style: italic; }
+.spine-chat__input-area--frozen .spine-chat__input:focus { border-color: transparent; box-shadow: none; background: transparent; }
+
+.spine-chat__input-area--frozen .spine-chat__send-btn {
+  opacity: .25;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Send button */
+.spine-chat__send-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--spine-accent), var(--spine-primary));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--spine-transition), box-shadow var(--spine-transition), opacity var(--spine-transition);
+  flex-shrink: 0;
+  outline: none;
+}
+
+.spine-chat__send-btn:hover:not(:disabled) {
+  transform: scale(1.08);
+  box-shadow: 0 4px 14px rgba(29,78,216,.4);
+}
+
+.spine-chat__send-btn:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.spine-chat__send-btn svg { width: 18px; height: 18px; }
+
+/* ── Footer ────────────────────────────────────────────────────────────────── */
+.spine-chat__footer {
+  text-align: center;
+  padding: 6px 0 8px;
+  font-size: 10.5px;
+  color: var(--spine-gray-400);
+  flex-shrink: 0;
+  border-top: 1px solid var(--spine-gray-100);
+}
+
+.spine-chat__footer a {
+  color: var(--spine-accent);
+  text-decoration: none;
+}
+
+/* ── Animations ────────────────────────────────────────────────────────────── */
+@keyframes spine-pulse-ring {
+  0%,100% { box-shadow: var(--spine-shadow-btn), 0 0 0 0 rgba(29,78,216,.4); }
+  50%      { box-shadow: var(--spine-shadow-btn), 0 0 0 12px rgba(29,78,216,0); }
+}
+
+@keyframes spine-status-pulse {
+  0%,100% { box-shadow: 0 0 0 2px rgba(74,222,128,.3); }
+  50%      { box-shadow: 0 0 0 5px rgba(74,222,128,0); }
+}
+
+@keyframes spine-status-pulse-orange {
+  0%,100% { box-shadow: 0 0 0 2px rgba(251,146,60,.3); }
+  50%      { box-shadow: 0 0 0 5px rgba(251,146,60,0); }
+}
+
+@keyframes spine-typing {
+  0%,60%,100% { transform: translateY(0); }
+  30%          { transform: translateY(-6px); }
+}
+
+@keyframes spine-msg-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spine-bounce {
+  0%  { transform: scale(.4); }
+  70% { transform: scale(1.15); }
+  100%{ transform: scale(1); }
+}
+
+@keyframes spine-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  :root {
+    --spine-w:      100vw;
+    --spine-h:      90vh;
+    --spine-offset: 0px;
+    --spine-radius: 0px;
+  }
+
+  .spine-chat { right: 0; bottom: 0; }
+  .spine-chat--bottom-left { left: 0; right: 0; }
+
+  .spine-chat__launcher {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+  }
+
+  .spine-chat--bottom-left .spine-chat__launcher {
+    right: unset;
+    left: 20px;
+  }
+
+  .spine-chat__window {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    width: 100vw;
+    max-height: 90vh;
+    border-radius: 20px 20px 0 0;
+    transform: translateY(100%);
+    transform-origin: bottom center;
+  }
+
+  .spine-chat--open .spine-chat__window {
+    transform: translateY(0);
+  }
+
+  /* Branch buttons — single column on small screens */
+  .spine-chat__branch-buttons {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  :root { --spine-w: 340px; }
+}
+
+/* ── File attachment — visitor widget ─────────────────────────────────────── */
+.spine-chat__attach-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1.5px solid var(--spine-border);
+  background: transparent;
+  cursor: pointer;
+  color: #9ca3af;
+  transition: border-color .18s, color .18s, background .18s;
+  flex-shrink: 0;
+}
+
+.spine-chat__attach-btn svg { width: 16px; height: 16px; pointer-events: none; }
+
+.spine-chat__attach-btn:hover {
+  border-color: var(--spine-primary);
+  color: var(--spine-primary);
+  background: color-mix(in srgb, var(--spine-primary) 8%, transparent);
+}
+
+.spine-chat__file-img {
+  max-width: 200px;
+  max-height: 160px;
+  border-radius: 8px;
+  display: block;
+  margin-top: 4px;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,.25);
+}
+
+.spine-chat__file-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  font-size: 12.5px;
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: 7px;
+}
+
+.spine-chat__file-link--doc {
+  background: rgba(255,255,255,.15);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.25);
+}
+
+.spine-msg--bot .spine-chat__file-link--doc,
+.spine-msg--agent .spine-chat__file-link--doc {
+  background: rgba(0,0,0,.06);
+  color: var(--spine-primary);
+  border: 1px solid var(--spine-border);
+}
