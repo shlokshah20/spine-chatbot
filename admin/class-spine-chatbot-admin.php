@@ -198,7 +198,13 @@ final class Spine_Chatbot_Admin {
             wp_die( esc_html__( 'Insufficient permissions.', 'spine-chatbot' ) );
         }
 
-        $kb = require SPINE_CHATBOT_DIR . 'includes/knowledgebase-v1.php';
+        $per_page    = 20;
+        $page        = max( 1, (int) ( $_GET['kb_page'] ?? 1 ) );
+        $filter_mod  = sanitize_text_field( $_GET['module'] ?? '' );
+        $total       = Spine_Chatbot_DB::count_kb_entries( $filter_mod );
+        $total_pages = (int) ceil( $total / $per_page );
+        $kb_entries  = Spine_Chatbot_DB::get_kb_entries( $page, $per_page, $filter_mod );
+        $modules     = Spine_Chatbot_DB::get_kb_modules();
 
         require SPINE_CHATBOT_DIR . 'admin/views/view-kb.php';
     }
@@ -218,7 +224,7 @@ final class Spine_Chatbot_Admin {
             'spine_chatbot_welcome_message' => 'sanitize_textarea_field',
             'spine_chatbot_admin_email'     => 'sanitize_email',
             'spine_chatbot_demo_url'        => 'esc_url_raw',
-            'spine_chatbot_support_email'   => 'sanitize_email',   // v1.1
+            'spine_chatbot_support_email'   => 'sanitize_email',
             'spine_chatbot_position'        => [ $this->settings, 'sanitize_position' ],
             'spine_chatbot_accent_color'    => 'sanitize_hex_color',
             'spine_chatbot_primary_color'   => 'sanitize_hex_color',
@@ -232,6 +238,12 @@ final class Spine_Chatbot_Admin {
         // Icon media attachment ID
         $icon_id = absint( $_POST['spine_chatbot_icon_id'] ?? 0 );
         update_option( 'spine_chatbot_icon_id', $icon_id );
+
+        // Only overwrite the API key if the user actually entered a new one
+        $new_key = sanitize_text_field( wp_unslash( $_POST['spine_chatbot_anthropic_key'] ?? '' ) );
+        if ( ! empty( $new_key ) ) {
+            update_option( 'spine_chatbot_anthropic_key', $new_key );
+        }
 
         wp_safe_redirect( add_query_arg( [ 'page' => 'spine-chat-settings', 'saved' => '1' ], admin_url( 'admin.php' ) ) );
         exit;

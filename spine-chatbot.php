@@ -3,7 +3,7 @@
  * Plugin Name: Spine HR Chatbot
  * Plugin URI:  https://spinetechnologies.com
  * Description: Production-ready AI chatbot for Spine HR Suite & Spine Assets – knowledge-base search, live agent round-robin routing, lead capture, and real-time WordPress Heartbeat messaging.
- * Version:     1.2.5
+ * Version:     2.0.0
  * Author:      Spine Technologies Pvt. Ltd.
  * Author URI:  https://spinetechnologies.com
  * Text Domain: spine-chatbot
@@ -18,8 +18,8 @@
 defined( 'ABSPATH' ) || exit;
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-define( 'SPINE_CHATBOT_VERSION',        '1.2.5' );
-define( 'SPINE_CHATBOT_DB_VERSION',     '3' );
+define( 'SPINE_CHATBOT_VERSION',        '2.0.0' );
+define( 'SPINE_CHATBOT_DB_VERSION',     '4' );
 define( 'SPINE_CHATBOT_FILE',           __FILE__ );
 define( 'SPINE_CHATBOT_DIR',            plugin_dir_path( __FILE__ ) );
 define( 'SPINE_CHATBOT_URL',            plugin_dir_url( __FILE__ ) );
@@ -44,9 +44,10 @@ register_uninstall_hook( __FILE__, [ 'Spine_Chatbot_DB', 'uninstall' ] );
 add_action( 'plugins_loaded', static function (): void {
     $files = [
         'includes/class-spine-chatbot-db',
-        'includes/class-spine-chatbot-search',
         'includes/class-spine-chatbot-router',
         'includes/class-spine-chatbot-leads',
+        'includes/class-spine-chatbot-kb-importer',
+        'includes/class-spine-chatbot-ai',
         'includes/class-spine-chatbot-ajax',
         'includes/class-spine-chatbot-heartbeat',
         'includes/class-spine-chatbot-core',

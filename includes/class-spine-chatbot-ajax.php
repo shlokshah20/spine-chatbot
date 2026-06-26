@@ -1,25 +1,17 @@
 <?php
 /**
- * AJAX Handler — All frontend & admin endpoints  (v1.1 — branch-select support)
+ * AJAX Handler — All frontend & admin endpoints  (v2.0 — AI Agent)
  *
  * Every action verifies a nonce, sanitises all inputs, and escapes all outputs.
  * Public (nopriv) actions handle anonymous site visitors;
  * admin actions require capability checks.
  *
- * v1.1 changes:
- *   • Registers spine_chat_branch_select (public + nopriv).
- *   • handle_branch_select() records which product branch the user selected,
- *     stores the branch slug on the session, and (for the Support branch)
- *     marks the session as 'support_redirect'.
- *   • handle_message() now reads the 'branch' POST parameter and passes the
- *     corresponding scope key to search->query() so KB results are scoped
- *     to the chosen product category.
- *
- * Branch → scope mapping
- *   hr_suite      → product_categories['hr_suite']   (all HR Suite modules)
- *   assets        → product_categories['assets']
- *   international → product_categories['international']
- *   support       → no KB search; session immediately → support_redirect
+ * v2.0 changes:
+ *   • handle_message() now routes through Spine_Chatbot_AI instead of static KB search.
+ *   • Handles AI response types: answer | handover | demo_booked | error.
+ *   • handle_module_select() removed (no longer applicable to AI flow).
+ *   • KB CRUD AJAX endpoints added: spine_kb_add, spine_kb_update, spine_kb_delete,
+ *     spine_kb_import_file, spine_kb_seed.
  *
  * @package SpineChatbot
  */
@@ -28,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class Spine_Chatbot_Ajax {
 
-    private Spine_Chatbot_Search $search;
+    private Spine_Chatbot_AI     $ai;
     private Spine_Chatbot_Router $router;
     private Spine_Chatbot_Leads  $leads;
 
@@ -53,11 +45,11 @@ final class Spine_Chatbot_Ajax {
     ];
 
     public function __construct(
-        Spine_Chatbot_Search $search,
+        Spine_Chatbot_AI     $ai,
         Spine_Chatbot_Router $router,
         Spine_Chatbot_Leads  $leads
     ) {
-        $this->search = $search;
+        $this->ai     = $ai;
         $this->router = $router;
         $this->leads  = $leads;
     }
@@ -81,7 +73,6 @@ final class Spine_Chatbot_Ajax {
             'spine_chat_init'           => 'handle_init',
             'spine_chat_branch_select'  => 'handle_branch_select',
             'spine_chat_message'        => 'handle_message',
-            'spine_chat_module_select'  => 'handle_module_select',
             'spine_chat_request_agent'  => 'handle_request_agent',
             'spine_chat_submit_lead'    => 'handle_submit_lead',
             'spine_chat_poll'           => 'handle_poll',
@@ -110,6 +101,18 @@ final class Spine_Chatbot_Ajax {
         // ── Super-admin actions ────────────────────────────────────────────
         add_action( 'wp_ajax_spine_admin_all_sessions',  [ $this, 'handle_admin_all_sessions' ] );
         add_action( 'wp_ajax_spine_admin_agent_list',    [ $this, 'handle_admin_agent_list' ] );
+
+        // ── Knowledge Base CRUD (admin-only) ───────────────────────────────
+        $kb_actions = [
+            'spine_kb_add'         => 'handle_kb_add',
+            'spine_kb_update'      => 'handle_kb_update',
+            'spine_kb_delete'      => 'handle_kb_delete',
+            'spine_kb_import_file' => 'handle_kb_import_file',
+            'spine_kb_seed'        => 'handle_kb_seed',
+        ];
+        foreach ( $kb_actions as $action => $method ) {
+            add_action( 'wp_ajax_' . $action, [ $this, $method ] );
+        }
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -296,11 +299,14 @@ final class Spine_Chatbot_Ajax {
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Process a user message through the KB search engine.
+     * Process a user message through the AI agent (v2.0).
      *
-     * v1.1: reads optional 'branch' POST param and maps it to a KB scope key
-     * before calling search->query(). This restricts results to the product
-     * category the user selected in the branch panel.
+     * Replaces the static KB search with Anthropic Claude API + RAG.
+     * Response types from AI:
+     *   answer      → normal bot reply
+     *   handover    → escalate to live agent (same as handle_request_agent)
+     *   demo_booked → lead captured via tool call; return success message
+     *   error       → API failure; return graceful error
      */
     public function handle_message(): void {
         $this->verify_nonce( 'spine_chat_nonce' );
@@ -313,28 +319,25 @@ final class Spine_Chatbot_Ajax {
             $this->json_error( 'Message cannot be empty.' );
         }
 
-        // Resolve KB scope from branch slug
-        $scope = self::BRANCH_SCOPE_MAP[ $branch ] ?? '';
-
         $session = Spine_Chatbot_DB::get_session( $session_id );
 
         if ( $session && $session->status === 'support_redirect' ) {
             $this->json_error( 'This session has been redirected to email support. No further messages can be sent.' );
         }
 
+        // Record the user message in the transcript
         Spine_Chatbot_DB::append_message( $session_id, [
             'role'    => 'user',
             'content' => $message,
         ] );
 
-        // ── If a live agent is present, skip the KB entirely ──────────────
-        // The agent reads messages via their dashboard; no bot reply needed.
+        // ── If a live agent is present, skip AI entirely ───────────────────
         if ( in_array( $session->status ?? '', [ 'active', 'pending_agent' ], true ) ) {
             $agent_id   = (int) ( $session->agent_id ?? 0 );
             $agent_name = '';
             if ( $agent_id ) {
-                $ai         = $this->router->get_agent_display_info( $agent_id );
-                $agent_name = $ai['name'] ?? '';
+                $info       = $this->router->get_agent_display_info( $agent_id );
+                $agent_name = $info['name'] ?? '';
             }
             $this->json_success( [
                 'type'       => 'live_agent',
@@ -343,9 +346,62 @@ final class Spine_Chatbot_Ajax {
             ] );
         }
 
-        // ── Run scoped KB search ───────────────────────────────────────────
-        $result = $this->search->query( $message, $scope );
+        // ── Query the AI agent ─────────────────────────────────────────────
+        $result = $this->ai->query( $message, $session_id, $branch );
 
+        // ── Handle response types ──────────────────────────────────────────
+
+        if ( $result['type'] === 'handover' ) {
+            // AI decided to escalate — run the same routing logic as handle_request_agent
+            $agent = $this->router->dispatch( $session_id );
+
+            if ( $agent ) {
+                $info = $this->router->get_agent_display_info( $agent->ID );
+
+                Spine_Chatbot_DB::append_message( $session_id, [
+                    'role'    => 'bot',
+                    'content' => $result['response'],
+                ] );
+
+                $this->json_success( [
+                    'type'       => 'requesting_agent',
+                    'response'   => $result['response'],
+                    'outcome'    => 'pending_agent',
+                    'agent_name' => esc_html( $agent->display_name ),
+                    'agent'      => $info,
+                ] );
+            }
+
+            // No agents online
+            $offline_msg = "Our support team is currently offline. Please leave your details and we'll get back to you promptly — or book a demo to speak with our team.";
+            Spine_Chatbot_DB::append_message( $session_id, [
+                'role'    => 'bot',
+                'content' => $offline_msg,
+            ] );
+
+            $this->json_success( [
+                'type'     => 'requesting_agent',
+                'response' => $offline_msg,
+                'outcome'  => 'offline',
+                'demo_url' => esc_url( get_option( 'spine_chatbot_demo_url', 'https://spinetechnologies.com/request-demo/' ) ),
+            ] );
+        }
+
+        if ( $result['type'] === 'demo_booked' ) {
+            // Lead was captured via the book_product_demo tool
+            Spine_Chatbot_DB::append_message( $session_id, [
+                'role'    => 'bot',
+                'content' => $result['response'],
+            ] );
+
+            $this->json_success( [
+                'type'        => 'demo_booked',
+                'response'    => $result['response'],
+                'demo_booked' => true,
+            ] );
+        }
+
+        // Default: answer (or error — still show the response)
         $bot_reply = $result['response'];
 
         Spine_Chatbot_DB::append_message( $session_id, [
@@ -354,35 +410,9 @@ final class Spine_Chatbot_Ajax {
         ] );
 
         $this->json_success( [
-            'type'         => $result['type'],
-            'response'     => $bot_reply,
-            'alternatives' => $result['alternatives'],
-            'module_id'    => $result['module_id'],
-            'score'        => round( $result['score'], 2 ),
-            'branch'       => $branch,
-            'scope'        => $scope,
-        ] );
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /** User selects one of the alternative module suggestions. */
-    public function handle_module_select(): void {
-        $this->verify_nonce( 'spine_chat_nonce' );
-
-        $session_id = $this->require_session();
-        $module_id  = sanitize_key( wp_unslash( $_POST['module_id'] ?? '' ) );
-
-        $result = $this->search->get_module_overview( $module_id );
-
-        Spine_Chatbot_DB::append_message( $session_id, [
-            'role'    => 'bot',
-            'content' => $result['response'],
-        ] );
-
-        $this->json_success( [
-            'type'     => 'answer',
-            'response' => $result['response'],
+            'type'     => $result['type'] === 'error' ? 'answer' : 'answer',
+            'response' => $bot_reply,
+            'branch'   => $branch,
         ] );
     }
 
@@ -729,6 +759,123 @@ final class Spine_Chatbot_Ajax {
         $this->json_success( [ 'agents' => $out ] );
     }
 
+    // ══════════════════════════════════════════════════════════════════════════
+    // KNOWLEDGE BASE CRUD (admin-only)
+    // ══════════════════════════════════════════════════════════════════════════
+
+    public function handle_kb_add(): void {
+        $this->verify_nonce( 'spine_admin_nonce' );
+        $this->require_manage_options();
+
+        $content    = sanitize_textarea_field( wp_unslash( $_POST['content']    ?? '' ) );
+        $module     = sanitize_text_field(     wp_unslash( $_POST['module']     ?? 'General' ) );
+        $entry_type = sanitize_text_field(     wp_unslash( $_POST['entry_type'] ?? 'General' ) );
+
+        if ( strlen( trim( $content ) ) < 10 ) {
+            $this->json_error( 'Content must be at least 10 characters.' );
+        }
+
+        $id = Spine_Chatbot_DB::insert_kb_entry( $content, $module, $entry_type );
+        if ( ! $id ) {
+            $this->json_error( 'Failed to save entry.' );
+        }
+
+        $this->json_success( [ 'id' => $id, 'message' => 'Entry added.' ] );
+    }
+
+    public function handle_kb_update(): void {
+        $this->verify_nonce( 'spine_admin_nonce' );
+        $this->require_manage_options();
+
+        $id         = (int) ( $_POST['id'] ?? 0 );
+        $content    = sanitize_textarea_field( wp_unslash( $_POST['content']    ?? '' ) );
+        $module     = sanitize_text_field(     wp_unslash( $_POST['module']     ?? 'General' ) );
+        $entry_type = sanitize_text_field(     wp_unslash( $_POST['entry_type'] ?? 'General' ) );
+
+        if ( $id < 1 ) {
+            $this->json_error( 'Invalid entry ID.' );
+        }
+        if ( strlen( trim( $content ) ) < 10 ) {
+            $this->json_error( 'Content must be at least 10 characters.' );
+        }
+
+        $ok = Spine_Chatbot_DB::update_kb_entry( $id, $content, $module, $entry_type );
+        $ok ? $this->json_success( [ 'message' => 'Entry updated.' ] )
+            : $this->json_error( 'Failed to update entry.' );
+    }
+
+    public function handle_kb_delete(): void {
+        $this->verify_nonce( 'spine_admin_nonce' );
+        $this->require_manage_options();
+
+        $id = (int) ( $_POST['id'] ?? 0 );
+        if ( $id < 1 ) {
+            $this->json_error( 'Invalid entry ID.' );
+        }
+
+        $ok = Spine_Chatbot_DB::delete_kb_entry( $id );
+        $ok ? $this->json_success( [ 'message' => 'Entry deleted.' ] )
+            : $this->json_error( 'Failed to delete entry.' );
+    }
+
+    public function handle_kb_import_file(): void {
+        $this->verify_nonce( 'spine_admin_nonce' );
+        $this->require_manage_options();
+
+        if ( empty( $_FILES['file'] ) || $_FILES['file']['error'] !== UPLOAD_ERR_OK ) {
+            $this->json_error( 'No file received or upload error.' );
+        }
+
+        $file       = $_FILES['file'];
+        $module     = sanitize_text_field( wp_unslash( $_POST['module']     ?? 'General' ) );
+        $entry_type = sanitize_text_field( wp_unslash( $_POST['entry_type'] ?? 'General' ) );
+        $mime       = mime_content_type( $file['tmp_name'] );
+
+        $allowed_mime = [
+            'application/pdf',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/msword',
+            'text/plain',
+        ];
+        if ( ! in_array( $mime, $allowed_mime, true ) ) {
+            $this->json_error( 'Only PDF, DOCX, and TXT files are accepted for KB import.' );
+        }
+
+        if ( $file['size'] > 10 * 1024 * 1024 ) {
+            $this->json_error( 'File must be under 10 MB.' );
+        }
+
+        $importer = new Spine_Chatbot_KB_Importer();
+        $result   = $importer->import_file( $file['tmp_name'], $mime, $module, $entry_type );
+
+        if ( ! empty( $result['error'] ) ) {
+            $this->json_error( $result['error'] );
+        }
+
+        $this->json_success( [
+            'imported' => $result['imported'],
+            'skipped'  => $result['skipped'],
+            'message'  => sprintf(
+                'Import complete. %d chunk(s) added to Knowledge Base.',
+                $result['imported']
+            ),
+        ] );
+    }
+
+    public function handle_kb_seed(): void {
+        $this->verify_nonce( 'spine_admin_nonce' );
+        $this->require_manage_options();
+
+        $result = Spine_Chatbot_DB::seed_kb_from_static();
+
+        $this->json_success( [
+            'imported' => $result['imported'],
+            'message'  => $result['imported'] > 0
+                ? sprintf( 'Seeded %d entries from the legacy knowledge base.', $result['imported'] )
+                : 'Knowledge base already has entries — seed skipped.',
+        ] );
+    }
+
     // ── Shared helpers ─────────────────────────────────────────────────────────
 
     private function verify_nonce( string $action ): void {
@@ -749,6 +896,13 @@ final class Spine_Chatbot_Ajax {
             $this->json_error( 'Session not found.' );
         }
         return $sid;
+    }
+
+    private function require_manage_options(): void {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => 'Administrator access required.' ], 403 );
+            exit;
+        }
     }
 
     private function require_agent(): void {

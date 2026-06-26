@@ -99,6 +99,33 @@ $primary      = get_option( 'spine_chatbot_primary_color',  '#0891b2' );
             </table>
         </div>
 
+        <!-- ── AI Configuration ─────────────────────────────────────────────── -->
+        <div class="spine-card">
+            <h2 class="spine-card__title">AI Configuration</h2>
+            <table class="form-table" role="presentation">
+                <tr>
+                    <th><label for="spine_chatbot_anthropic_key">Anthropic API Key</label></th>
+                    <td>
+                        <input type="password" id="spine_chatbot_anthropic_key"
+                               name="spine_chatbot_anthropic_key"
+                               value="<?php echo esc_attr( get_option( 'spine_chatbot_anthropic_key', '' ) ); ?>"
+                               class="large-text"
+                               autocomplete="off"
+                               placeholder="sk-ant-…">
+                        <p class="description">
+                            Claude API key from <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a>.
+                            Stored in <code>wp_options</code>. The chatbot will not function without a valid key.
+                        </p>
+                        <?php if ( get_option( 'spine_chatbot_anthropic_key' ) ) : ?>
+                        <p style="color:#16a34a;font-size:12px;margin-top:4px;">
+                            ✓ API key is set. Leave blank to keep the existing key, or enter a new value to replace it.
+                        </p>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
         <!-- ── Appearance ───────────────────────────────────────────────────── -->
         <div class="spine-card">
             <h2 class="spine-card__title">Appearance</h2>

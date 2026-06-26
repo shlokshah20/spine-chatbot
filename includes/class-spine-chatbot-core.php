@@ -20,17 +20,17 @@ final class Spine_Chatbot_Core {
 
     private static ?self $instance = null;
 
-    private Spine_Chatbot_Search    $search;
+    private Spine_Chatbot_AI        $ai;
     private Spine_Chatbot_Router    $router;
     private Spine_Chatbot_Leads     $leads;
     private Spine_Chatbot_Ajax      $ajax;
     private Spine_Chatbot_Heartbeat $heartbeat;
 
     private function __construct() {
-        $this->search    = new Spine_Chatbot_Search();
         $this->router    = new Spine_Chatbot_Router();
         $this->leads     = new Spine_Chatbot_Leads();
-        $this->ajax      = new Spine_Chatbot_Ajax( $this->search, $this->router, $this->leads );
+        $this->ai        = new Spine_Chatbot_AI( $this->leads, $this->router );
+        $this->ajax      = new Spine_Chatbot_Ajax( $this->ai, $this->router, $this->leads );
         $this->heartbeat = new Spine_Chatbot_Heartbeat( $this->router );
 
         $this->register_hooks();

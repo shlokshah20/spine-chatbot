@@ -12,8 +12,9 @@ defined( 'ABSPATH' ) || exit;
 
 final class Spine_Chatbot_DB {
 
-    // ── Table name (without prefix) ────────────────────────────────────────────
-    private const TABLE = 'spine_chatbot_interactions';
+    // ── Table names (without prefix) ──────────────────────────────────────────
+    private const TABLE    = 'spine_chatbot_interactions';
+    private const KB_TABLE = 'spine_kb_entries';
 
     // ── Agent user-meta keys ───────────────────────────────────────────────────
     public const META_IS_AGENT       = 'spine_is_agent';
@@ -58,11 +59,30 @@ final class Spine_Chatbot_DB {
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta( $sql );
 
+        // ── KB entries table (v4) ──────────────────────────────────────────
+        $kb_table = $wpdb->prefix . self::KB_TABLE;
+        $sql_kb   = "CREATE TABLE {$kb_table} (
+            id          BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            content     LONGTEXT     NOT NULL,
+            module      VARCHAR(50)  NOT NULL DEFAULT 'General',
+            entry_type  VARCHAR(20)  NOT NULL DEFAULT 'General',
+            embedding   LONGTEXT     DEFAULT NULL,
+            created_at  DATETIME     NOT NULL,
+            updated_at  DATETIME     NOT NULL,
+            PRIMARY KEY (id),
+            KEY         idx_module (module),
+            KEY         idx_type   (entry_type),
+            FULLTEXT KEY ft_content (content)
+        ) ENGINE=InnoDB {$charset};";
+        dbDelta( $sql_kb );
+
         update_option( 'spine_chatbot_db_version', SPINE_CHATBOT_DB_VERSION );
     }
 
     public static function uninstall(): void {
         global $wpdb;
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        $wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . self::KB_TABLE );
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         $wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . self::TABLE );
 
@@ -80,6 +100,148 @@ final class Spine_Chatbot_DB {
     public static function table(): string {
         global $wpdb;
         return $wpdb->prefix . self::TABLE;
+    }
+
+    public static function kb_table(): string {
+        global $wpdb;
+        return $wpdb->prefix . self::KB_TABLE;
+    }
+
+    // ── Knowledge Base CRUD ────────────────────────────────────────────────────
+
+    public static function get_kb_entries( int $page = 1, int $per_page = 20, string $module = '' ): array {
+        global $wpdb;
+        $offset = ( max( 1, $page ) - 1 ) * $per_page;
+        $table  = self::kb_table();
+
+        if ( $module ) {
+            return $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT * FROM {$table} WHERE module = %s ORDER BY created_at DESC LIMIT %d OFFSET %d",
+                    $module, $per_page, $offset
+                )
+            );
+        }
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        return $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM {$table} ORDER BY created_at DESC LIMIT %d OFFSET %d",
+                $per_page, $offset
+            )
+        );
+    }
+
+    public static function get_kb_entry( int $id ): ?object {
+        global $wpdb;
+        return $wpdb->get_row(
+            $wpdb->prepare( 'SELECT * FROM ' . self::kb_table() . ' WHERE id = %d', $id )
+        ) ?: null;
+    }
+
+    public static function insert_kb_entry( string $content, string $module = 'General', string $entry_type = 'General' ): int|false {
+        global $wpdb;
+        $now = current_time( 'mysql' );
+        $ok  = $wpdb->insert(
+            self::kb_table(),
+            [
+                'content'    => $content,
+                'module'     => $module,
+                'entry_type' => $entry_type,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [ '%s', '%s', '%s', '%s', '%s' ]
+        );
+        return $ok ? $wpdb->insert_id : false;
+    }
+
+    public static function update_kb_entry( int $id, string $content, string $module, string $entry_type ): bool {
+        global $wpdb;
+        return (bool) $wpdb->update(
+            self::kb_table(),
+            [
+                'content'    => $content,
+                'module'     => $module,
+                'entry_type' => $entry_type,
+                'updated_at' => current_time( 'mysql' ),
+            ],
+            [ 'id' => $id ],
+            [ '%s', '%s', '%s', '%s' ],
+            [ '%d' ]
+        );
+    }
+
+    public static function delete_kb_entry( int $id ): bool {
+        global $wpdb;
+        return (bool) $wpdb->delete( self::kb_table(), [ 'id' => $id ], [ '%d' ] );
+    }
+
+    public static function count_kb_entries( string $module = '' ): int {
+        global $wpdb;
+        $table = self::kb_table();
+        if ( $module ) {
+            return (int) $wpdb->get_var(
+                $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE module = %s", $module )
+            );
+        }
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
+    }
+
+    public static function get_kb_modules(): array {
+        global $wpdb;
+        $table = self::kb_table();
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        return $wpdb->get_col( "SELECT DISTINCT module FROM {$table} ORDER BY module ASC" );
+    }
+
+    /**
+     * One-time migration: seed the static knowledgebase array into the DB table.
+     * Skips if table already has rows.
+     *
+     * @return array{ imported: int }
+     */
+    public static function seed_kb_from_static(): array {
+        if ( self::count_kb_entries() > 0 ) {
+            return [ 'imported' => 0 ];
+        }
+
+        $kb_file = plugin_dir_path( __DIR__ ) . 'data/knowledgebase-v1.php';
+        if ( ! file_exists( $kb_file ) ) {
+            return [ 'imported' => 0 ];
+        }
+
+        $kb       = require $kb_file;
+        $imported = 0;
+
+        foreach ( $kb as $item ) {
+            $module     = sanitize_text_field( $item['module']     ?? 'General' );
+            $entry_type = sanitize_text_field( $item['entry_type'] ?? 'FAQ' );
+
+            // Combine question + answer into a single searchable chunk
+            $content = '';
+            if ( ! empty( $item['question'] ) ) {
+                $content .= 'Q: ' . trim( $item['question'] ) . "\n";
+            }
+            if ( ! empty( $item['answer'] ) ) {
+                $content .= 'A: ' . trim( $item['answer'] );
+            }
+            if ( ! empty( $item['content'] ) ) {
+                $content = trim( $item['content'] );
+            }
+
+            if ( strlen( $content ) < 10 ) {
+                continue;
+            }
+
+            $ok = self::insert_kb_entry( $content, $module, $entry_type );
+            if ( $ok ) {
+                $imported++;
+            }
+        }
+
+        return [ 'imported' => $imported ];
     }
 
     // ── Session CRUD ───────────────────────────────────────────────────────────
