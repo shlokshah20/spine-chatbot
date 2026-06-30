@@ -17,15 +17,21 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// Guard: abort silently if another copy of this plugin is already loaded.
+// This prevents fatal errors when two versions exist in wp-content/plugins.
+if ( defined( 'SPINE_CHATBOT_VERSION' ) ) {
+    return;
+}
+
 // ── Constants ──────────────────────────────────────────────────────────────────
 define( 'SPINE_CHATBOT_VERSION',        '2.0.0' );
 define( 'SPINE_CHATBOT_DB_VERSION',     '4' );
 define( 'SPINE_CHATBOT_FILE',           __FILE__ );
 define( 'SPINE_CHATBOT_DIR',            plugin_dir_path( __FILE__ ) );
 define( 'SPINE_CHATBOT_URL',            plugin_dir_url( __FILE__ ) );
-define( 'SPINE_CHATBOT_AGENT_TIMEOUT',  60 );    // seconds before agent auto-marked Away
-define( 'SPINE_CHATBOT_HIGH_THRESHOLD', 20.0 );  // score → direct answer
-define( 'SPINE_CHATBOT_ALT_THRESHOLD',  8.0  );  // score → show alternatives (top-3)
+define( 'SPINE_CHATBOT_AGENT_TIMEOUT',  60 );
+define( 'SPINE_CHATBOT_HIGH_THRESHOLD', 20.0 );
+define( 'SPINE_CHATBOT_ALT_THRESHOLD',  8.0  );
 
 // ── Lifecycle ──────────────────────────────────────────────────────────────────
 register_activation_hook( __FILE__, static function (): void {
@@ -42,6 +48,10 @@ register_uninstall_hook( __FILE__, [ 'Spine_Chatbot_DB', 'uninstall' ] );
 
 // ── Boot ───────────────────────────────────────────────────────────────────────
 add_action( 'plugins_loaded', static function (): void {
+    // Use a local variable so this closure always resolves files relative to
+    // its own plugin directory, regardless of which copy loaded first.
+    $dir = plugin_dir_path( __FILE__ );
+
     $files = [
         'includes/class-spine-chatbot-db',
         'includes/class-spine-chatbot-router',
@@ -55,7 +65,7 @@ add_action( 'plugins_loaded', static function (): void {
         'admin/class-spine-chatbot-admin',
     ];
     foreach ( $files as $file ) {
-        require_once SPINE_CHATBOT_DIR . $file . '.php';
+        require_once $dir . $file . '.php';
     }
     Spine_Chatbot_Core::get_instance();
 }, 0 );
