@@ -1,15 +1,9 @@
 <?php
 /**
- * Plugin Core — Orchestrator & Asset Loader  (v1.1 — branch routing)
+ * Plugin Core — Orchestrator & Asset Loader  (v2.1 — open AI chat)
  *
  * Singleton that boots all sub-systems, registers frontend widget hooks,
  * and enqueues scripts/styles on the correct pages.
- *
- * v1.1 changes:
- *   • spineChatVars includes 'branches' config array + 'supportEmail'.
- *   • Widget HTML includes the branch-select panel (hidden by default,
- *     shown by JS state machine on first open, before input is unlocked).
- *   • Input area starts locked; JS unlocks after a product branch is chosen.
  *
  * @package SpineChatbot
  */
@@ -89,77 +83,12 @@ final class Spine_Chatbot_Core {
             'position'       => sanitize_key( get_option( 'spine_chatbot_position', 'bottom-right' ) ),
             'botName'        => esc_html( get_option( 'spine_chatbot_bot_name', 'Spine Assistant' ) ),
             'welcomeMessage' => esc_html( get_option( 'spine_chatbot_welcome_message',
-                "Hello! 👋 I'm the Spine HR Assistant. Please select a topic to get started:" ) ),
+                "Hi! I'm your Spine AI Assistant. How can I help you with our software or services today?" ) ),
             'iconUrl'        => esc_url( $icon_url ),
             'demoUrl'        => esc_url( get_option( 'spine_chatbot_demo_url', 'https://spinetechnologies.com/request-demo/' ) ),
             'accentColor'    => sanitize_hex_color( get_option( 'spine_chatbot_accent_color',  '#1d4ed8' ) ),
             'primaryColor'   => sanitize_hex_color( get_option( 'spine_chatbot_primary_color', '#0891b2' ) ),
             'supportEmail'   => sanitize_email( get_option( 'spine_chatbot_support_email', 'support@spinetechnologies.com' ) ),
-            'heartbeatFast'  => 3,
-            'heartbeatSlow'  => 15,
-
-            // ── Branch configuration (consumed by JS state machine) ────────
-            // Each branch object drives: button rendering, AJAX payload, scope,
-            // and (for 'support') the freeze behavior.
-            'branches' => [
-                [
-                    'id'       => 'hr_suite',
-                    'label'    => 'HR Suite',
-                    'icon'     => 'people',    // maps to SVG icon key in JS
-                    'desc'     => 'Recruitment, Leave, Attendance, Payroll & more',
-                    'scope'    => 'hr_suite',
-                    'support'  => false,
-                ],
-                [
-                    'id'       => 'assets',
-                    'label'    => 'Assets',
-                    'icon'     => 'box',
-                    'desc'     => 'IT Asset tracking, allocation & lifecycle',
-                    'scope'    => 'assets',
-                    'support'  => false,
-                ],
-                [
-                    'id'       => 'support',
-                    'label'    => 'Support',
-                    'icon'     => 'headset',
-                    'desc'     => 'Raise a support query with our team',
-                    'scope'    => '',
-                    'support'  => true,
-                ],
-                [
-                    'id'       => 'international',
-                    'label'    => 'International HR Suite',
-                    'icon'     => 'globe',
-                    'desc'     => 'GCC/UAE/SEA payroll compliance & expat management',
-                    'scope'    => 'international',
-                    'support'  => false,
-                ],
-            ],
-
-            // Per-product quick replies shown after a product branch is selected.
-            'branchQuickReplies' => [
-                'hr_suite' => [
-                    'Leave Management',
-                    'Recruitment & ATS',
-                    'Time & Attendance',
-                    'Performance Management',
-                    'Book a Demo',
-                ],
-                'assets' => [
-                    'Asset Allocation',
-                    'Depreciation Methods',
-                    'Asset Audit Process',
-                    'Offboarding Asset Return',
-                    'Book a Demo',
-                ],
-                'international' => [
-                    'UAE WPS Filing',
-                    'Gratuity / End of Service',
-                    'Saudi GOSI & Nitaqat',
-                    'Malaysia EPF & SOCSO',
-                    'Multi-Currency Payroll',
-                ],
-            ],
         ] );
     }
 
@@ -232,7 +161,6 @@ final class Spine_Chatbot_Core {
                         </span>
                     </div>
                     <div class="spine-chat__header-actions">
-                        <!-- Restart / back to branches button (shown after branch is selected) -->
                         <button class="spine-chat__header-btn" id="spine-restart-btn"
                                 aria-label="Restart conversation" title="Start over" hidden>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
@@ -260,22 +188,6 @@ final class Spine_Chatbot_Core {
                     <span></span><span></span><span></span>
                 </div>
 
-                <!-- ── Branch-Select Panel ─────────────────────────────────
-                     Shown immediately on first open, before user input is
-                     unlocked. JS state machine renders the 4 buttons here.
-                     HTML skeleton is empty; JS fills #spine-branch-buttons.  -->
-                <div class="spine-chat__branch-panel" id="spine-branch-panel" hidden>
-                    <p class="spine-chat__branch-heading">What can I help you with?</p>
-                    <div class="spine-chat__branch-buttons" id="spine-branch-buttons">
-                        <!-- Rendered by chatbot-script.js from spineChatVars.branches -->
-                    </div>
-                </div>
-
-                <!-- Quick Replies (shown after product branch selected) -->
-                <div class="spine-chat__quick-replies" id="spine-quick-replies" hidden></div>
-
-                <!-- Alternatives panel (medium-confidence search results) -->
-                <div class="spine-chat__alternatives" id="spine-alternatives" hidden></div>
 
                 <!-- Lead Capture Form -->
                 <div class="spine-chat__lead-form" id="spine-lead-form" hidden>
@@ -319,8 +231,8 @@ final class Spine_Chatbot_Core {
                     </form>
                 </div>
 
-                <!-- Input Area (starts locked until a product branch is chosen) -->
-                <div class="spine-chat__input-area spine-chat__input-area--locked" id="spine-input-area">
+                <!-- Input Area -->
+                <div class="spine-chat__input-area" id="spine-input-area">
                     <!-- Attach button (only visible during live agent chat) -->
                     <label class="spine-chat__attach-btn" id="spine-attach-btn" title="Attach file (JPG, PNG, PDF · max 5 MB)" hidden aria-label="Attach file">
                         <input type="file" id="spine-file-input" accept=".jpg,.jpeg,.png,.pdf" style="display:none;" aria-hidden="true">
@@ -328,7 +240,7 @@ final class Spine_Chatbot_Core {
                     </label>
                     <textarea id="spine-chat-input"
                               class="spine-chat__input"
-                              placeholder="Select a topic above to begin…"
+                              placeholder="Type your message…"
                               aria-label="Type your message"
                               rows="1"
                               maxlength="500"

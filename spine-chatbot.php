@@ -24,7 +24,7 @@ if ( defined( 'SPINE_CHATBOT_VERSION' ) ) {
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-define( 'SPINE_CHATBOT_VERSION',        '2.0.0' );
+define( 'SPINE_CHATBOT_VERSION',        '2.1.0' );
 define( 'SPINE_CHATBOT_DB_VERSION',     '4' );
 define( 'SPINE_CHATBOT_FILE',           __FILE__ );
 define( 'SPINE_CHATBOT_DIR',            plugin_dir_path( __FILE__ ) );

@@ -166,7 +166,7 @@ final class Spine_Chatbot_Ajax {
         }
 
         $welcome = get_option( 'spine_chatbot_welcome_message',
-            "Hello! 👋 I'm the Spine HR Assistant. Please select a topic to get started:" );
+            "Hi! I'm your Spine AI Assistant. How can I help you with our software or services today?" );
 
         Spine_Chatbot_DB::append_message( $session_id, [
             'role'    => 'bot',
@@ -175,7 +175,7 @@ final class Spine_Chatbot_Ajax {
 
         $this->json_success( [
             'session_id'      => $session_id,
-            'status'          => 'branch_select',
+            'status'          => 'bot',
             'branch'          => '',
             'welcome_message' => esc_html( $welcome ),
         ] );
