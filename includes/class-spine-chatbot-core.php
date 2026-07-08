@@ -86,8 +86,8 @@ final class Spine_Chatbot_Core {
                 "Hi! I'm your Spine AI Assistant. How can I help you with our software or services today?" ) ),
             'iconUrl'        => esc_url( $icon_url ),
             'demoUrl'        => esc_url( get_option( 'spine_chatbot_demo_url', 'https://spinetechnologies.com/request-demo/' ) ),
-            'accentColor'    => sanitize_hex_color( get_option( 'spine_chatbot_accent_color',  '#1d4ed8' ) ),
-            'primaryColor'   => sanitize_hex_color( get_option( 'spine_chatbot_primary_color', '#0891b2' ) ),
+            'accentColor'    => sanitize_hex_color( get_option( 'spine_chatbot_accent_color',  '#0044EB' ) ),
+            'primaryColor'   => sanitize_hex_color( get_option( 'spine_chatbot_primary_color', '#0044EB' ) ),
             'supportEmail'   => sanitize_email( get_option( 'spine_chatbot_support_email', 'support@spinetechnologies.com' ) ),
         ] );
     }
@@ -105,8 +105,8 @@ final class Spine_Chatbot_Core {
         $icon_url  = $icon_id ? wp_get_attachment_image_url( $icon_id, 'thumbnail' ) : '';
         $pos_class = 'spine-chat--' . $position;
 
-        $accent  = sanitize_hex_color( get_option( 'spine_chatbot_accent_color',  '#1d4ed8' ) );
-        $primary = sanitize_hex_color( get_option( 'spine_chatbot_primary_color', '#0891b2' ) );
+        $accent  = sanitize_hex_color( get_option( 'spine_chatbot_accent_color',  '#0044EB' ) );
+        $primary = sanitize_hex_color( get_option( 'spine_chatbot_primary_color', '#0044EB' ) );
         echo "<style>:root{--spine-accent:{$accent};--spine-primary:{$primary};}</style>\n";
         ?>
         <div id="spine-chat-root" class="spine-chat <?php echo esc_attr( $pos_class ); ?>"
