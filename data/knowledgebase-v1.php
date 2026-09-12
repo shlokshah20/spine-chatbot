@@ -818,4 +818,194 @@ return [
         'content'    => 'Q: Can I manage assets across multiple company locations?\nA: Yes. Spine Assets supports multiple companies, locations, and branches from a single platform.',
     ],
 
+    // ══════════════════════════════════════════════════════════════════
+    // PRICING
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Pricing',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: How much does Spine HR Suite cost?\nA: Spine HR Suite is priced on a per-employee, per-month basis. Pricing varies based on the number of modules selected and the size of your organisation. We offer flexible plans to suit businesses of all sizes — from growing startups to large enterprises. Contact our team for a customised quote at sales@spinetechnologies.com or book a demo and our team will walk you through the pricing.',
+    ],
+
+    [
+        'module'     => 'Pricing',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Is there a free trial for Spine HR Suite?\nA: We offer a free personalised product demo where our team walks you through the full platform tailored to your organisation\'s needs. Contact us to schedule one at spinetechnologies.com/request-demo/',
+    ],
+
+    [
+        'module'     => 'Pricing',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Is Spine HR pricing per user or a flat fee?\nA: Pricing is per employee per month, so you only pay for the headcount you have. Volume discounts apply for larger organisations. Contact our sales team for a custom quote.',
+    ],
+
+    // ══════════════════════════════════════════════════════════════════
+    // IMPLEMENTATION
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Implementation',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: How long does Spine HR Suite implementation take?\nA: Implementation typically takes 4–8 weeks depending on your organisation size, number of modules, and data migration requirements. Our team handles the full setup including configuration, data migration, and go-live support.',
+    ],
+
+    [
+        'module'     => 'Implementation',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine Technologies provide training?\nA: Yes. Spine Technologies provides dedicated onboarding training for HR administrators and employees as part of the implementation process. Training is available online and on-site.',
+    ],
+
+    [
+        'module'     => 'Implementation',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Is there a dedicated account manager after go-live?\nA: Yes. Every client is assigned a dedicated account manager who oversees implementation and remains your primary point of contact post go-live.',
+    ],
+
+    // ══════════════════════════════════════════════════════════════════
+    // PAYROLL & STATUTORY COMPLIANCE
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Spine HR Suite',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite handle Indian statutory compliance?\nA: Yes. Spine HR Suite fully automates Indian statutory compliance including Provident Fund (PF), Employee State Insurance (ESI), Professional Tax (PT), Tax Deducted at Source (TDS), Labour Welfare Fund (LWF), and Gratuity calculations. The system stays updated with regulatory changes automatically.',
+    ],
+
+    [
+        'module'     => 'Spine HR Suite',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite auto-generate Form 16?\nA: Yes. Spine HR Suite automatically generates Form 16 (Part A and Part B) for all employees at the end of the financial year. It also generates Form 24Q, Form 12BB, and other statutory reports required for income tax filing.',
+    ],
+
+    [
+        'module'     => 'Spine HR Suite',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite handle multiple state Professional Tax slabs?\nA: Yes. The payroll engine supports state-wise Professional Tax slab configurations covering all Indian states that levy PT, including Maharashtra, Karnataka, West Bengal, Andhra Pradesh, and others.',
+    ],
+
+    // ══════════════════════════════════════════════════════════════════
+    // INTEGRATIONS
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Integrations',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite integrate with Tally or SAP?\nA: Yes. Spine HR Suite supports integration with leading ERP and accounting systems including Tally, SAP, and other financial platforms via API or data export. This allows payroll journals and expense data to flow directly into your accounts system without manual re-entry.',
+    ],
+
+    [
+        'module'     => 'Integrations',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite have an open API?\nA: Yes. Spine HR Suite provides REST APIs that allow integration with your existing systems — including ERP, time-tracking, access control, and biometric devices. Our team can assist with custom integration requirements.',
+    ],
+
+    [
+        'module'     => 'Integrations',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite integrate with biometric attendance devices?\nA: Yes. Spine HR Suite integrates with biometric attendance machines from major manufacturers. Attendance data syncs automatically into the payroll module, eliminating manual entry.',
+    ],
+
+    // ══════════════════════════════════════════════════════════════════
+    // DEPLOYMENT
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Deployment',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Is Spine HR Suite cloud-based or on-premise?\nA: Spine HR Suite is available both as a cloud-hosted SaaS solution and as an on-premise deployment for organisations that require data to remain within their own infrastructure. Our team can recommend the right deployment model based on your IT policy and security requirements.',
+    ],
+
+    [
+        'module'     => 'Deployment',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite have a mobile app?\nA: Yes. Spine HR Suite has a mobile app available on both iOS and Android. Employees can apply for leave, view payslips, mark attendance, submit expenses, and raise HR help desk tickets directly from the app.',
+    ],
+
+    // ══════════════════════════════════════════════════════════════════
+    // COMPANY SIZE & FIT
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Company',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Is Spine HR Suite suitable for a small company with 50 employees?\nA: Yes. Spine HR Suite is designed to scale from small businesses to large enterprises. We serve organisations ranging from 50 employees to 10,000+. The platform is modular, so smaller companies can start with core modules (Payroll, Leave, Attendance) and add more as they grow.',
+    ],
+
+    [
+        'module'     => 'Company',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: What is the minimum company size for Spine HR Suite?\nA: There is no strict minimum. Spine HR Suite is viable for any organisation looking to digitise their HR operations, typically from 25–30 employees upwards.',
+    ],
+
+    // ══════════════════════════════════════════════════════════════════
+    // SUPPORT
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Support',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: What support is available after go-live?\nA: Spine Technologies provides post-implementation support via email, phone, and an online support portal. Clients can raise tickets at support@spinetechnologies.com. Our support team is available Monday–Saturday during business hours.',
+    ],
+
+    [
+        'module'     => 'Support',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine offer phone support?\nA: Yes. Support is available via phone during business hours (Monday–Saturday, 9:30 AM–6:30 PM IST). Contact details are provided to clients at the time of onboarding.',
+    ],
+
+    // ══════════════════════════════════════════════════════════════════
+    // SECURITY & DATA
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Security',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Is Spine HR Suite ISO certified?\nA: Yes. Spine Technologies holds ISO certification. The company is also CRISIL SME certified, reflecting its commitment to quality and financial credibility.',
+    ],
+
+    [
+        'module'     => 'Security',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Is data stored securely in Spine HR Suite?\nA: Yes. Spine HR Suite is built with data privacy and security at its core. For clients in the Middle East and South-East Asia, our International HR Suite addresses regional compliance requirements. Please contact our team for specific compliance and data residency documentation.',
+    ],
+
+    // ══════════════════════════════════════════════════════════════════
+    // COMPETITOR COMPARISONS
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Company',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: How is Spine HR Suite better than GreytHR?\nA: Spine HR Suite offers a more comprehensive module set, including Fixed Asset Management (via Spine Assets), International payroll, and Visitors Management. Spine is rated 4.8 on TechImply and serves a broader geography including the Middle East and South-East Asia. With 25+ years in the industry and 10,000+ clients, Spine brings deep statutory compliance expertise built over decades.',
+    ],
+
+    [
+        'module'     => 'Company',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: How does Spine HR Suite compare to Darwinbox or Keka?\nA: Spine HR Suite is positioned as a cost-effective, enterprise-grade HRMS with 25+ years of industry experience and 10,000+ clients. Unlike newer platforms, Spine has deep statutory compliance built in from the ground up for Indian regulations. For mid-market companies that need proven payroll accuracy and compliance, Spine is a strong fit.',
+    ],
+
+    [
+        'module'     => 'Company',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: How does Spine HR Suite compare to Zoho People?\nA: Spine HR Suite is purpose-built exclusively for HR and payroll, with deeper statutory compliance features than general-purpose platforms like Zoho People. Zoho People is part of a broad business suite; Spine\'s singular focus on HRMS means stronger payroll accuracy, more granular compliance controls, and dedicated HR expertise.',
+    ],
+
+    // ══════════════════════════════════════════════════════════════════
+    // DEMO PROCESS
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Demo',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: What happens after I book a demo?\nA: After you submit a demo request, a member of our team will contact you within 1 business day to schedule a convenient time. The demo is a live walkthrough of Spine HR Suite tailored to your industry and company size, conducted online via video call. It typically takes 45–60 minutes.',
+    ],
+
+    [
+        'module'     => 'Demo',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Is the Spine HR Suite demo free?\nA: Yes, the demo is completely free with no obligation. Our product specialists will show you the modules most relevant to your requirements and answer any questions you have.',
+    ],
+
 ];
