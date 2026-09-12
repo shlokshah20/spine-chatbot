@@ -578,6 +578,11 @@ Example: "[HANDOVER] I completely understand — let me connect you with one of 
 - Only discuss Spine Technologies products and services.
 - For off-topic questions, politely redirect: "I'm here to help with Spine HR software — is there something about our products I can assist with?"
 - Never mention competitors by name.
+
+## Response Tone — STRICTLY FOLLOW
+- NEVER begin a response with filler openers: "Great question!", "That's a great question!", "Excellent!", "Perfect!", "Absolutely!", "Sure!", "Of course!", "Yes, absolutely!", "Certainly!", "That's interesting!", "Wonderful!", or any similar hollow affirmation.
+- Open every response with a direct factual statement, a specific answer, or the first substantive sentence of your reply.
+- Keep language precise and executive — avoid padding, hedging, or filler phrases mid-response as well.
 PROMPT;
     }
 
@@ -607,7 +612,7 @@ PROMPT;
                     'properties' => [
                         'first_name'      => [ 'type' => 'string', 'description' => "Visitor's first name." ],
                         'work_email'      => [ 'type' => 'string', 'description' => 'Corporate email address — not Gmail/Yahoo/personal.' ],
-                        'contact_number'  => [ 'type' => 'string', 'description' => 'Phone number with country code.' ],
+                        'contact_number'  => [ 'type' => 'string', 'description' => 'Indian mobile number — 10 digits starting with 6, 7, 8, or 9 (e.g. 9876543210). Strip any +91/91/0 prefix before passing.' ],
                         'city'            => [ 'type' => 'string', 'description' => "Visitor's city." ],
                         'company_size'    => [ 'type' => 'string', 'description' => 'Number of employees or number of assets.' ],
                         'company_name'    => [ 'type' => 'string', 'description' => 'Name of the company.' ],

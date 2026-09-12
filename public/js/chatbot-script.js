@@ -460,7 +460,13 @@
     } else if (isPersonalDomain) {
       errors.email = 'Please use your work email address (personal emails like Gmail are not accepted).';
     }
-    if (!phone)   errors.phone   = 'Phone is required.';
+    // Indian mobile: strip +91/91/0 prefix then enforce [6-9]\d{9}
+    var phoneDigits = phone.replace(/[\s\-()]/g, '').replace(/^\+?91|^0/, '');
+    if (!phone) {
+      errors.phone = 'Phone number is required.';
+    } else if (!/^[6-9]\d{9}$/.test(phoneDigits)) {
+      errors.phone = 'Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.';
+    }
     if (!company) errors.company = 'Company name is required.';
 
     if (Object.keys(errors).length) {

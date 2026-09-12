@@ -83,8 +83,12 @@ final class Spine_Chatbot_Leads {
 
         if ( empty( trim( $raw['phone'] ?? '' ) ) ) {
             $errors['phone'] = 'Your phone number is required.';
-        } elseif ( ! preg_match( '/^[+\d\s\-()]{7,20}$/', $raw['phone'] ) ) {
-            $errors['phone'] = 'Please enter a valid phone number.';
+        } else {
+            // Strip spaces, hyphens, parentheses; remove leading +91 / 91 / 0 country prefix
+            $digits = preg_replace( '/\D/', '', preg_replace( '/^\+?91|^0/', '', preg_replace( '/[\s\-()]/', '', $raw['phone'] ) ) );
+            if ( ! preg_match( '/^[6-9]\d{9}$/', $digits ) ) {
+                $errors['phone'] = 'Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.';
+            }
         }
 
         if ( empty( trim( $raw['company'] ?? '' ) ) ) {
