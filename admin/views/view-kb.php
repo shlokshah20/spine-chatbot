@@ -319,7 +319,6 @@ $type_badge = [
 
     // ── Delete ──────────────────────────────────────────────────────────────
     window.spineKbDelete = function(id, btn) {
-        if ( !confirm('Delete this KB entry permanently?') ) return;
         btn.disabled = true;
         $.post(AJAX, { action:'spine_kb_delete', nonce:NONCE, id:id })
           .done(function(r) {
@@ -341,7 +340,6 @@ $type_badge = [
     // ── Seed legacy KB ──────────────────────────────────────────────────────
     window.spineKbSeed = function() {
         var btn = document.getElementById('spine-kb-seed-btn');
-        if (!confirm('Import all entries from the legacy static knowledge base into the database? This only runs if the KB table is currently empty.')) return;
         btn.disabled = true;
         btn.textContent = 'Importing…';
         $.post(AJAX, { action:'spine_kb_seed', nonce:NONCE })
