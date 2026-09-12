@@ -1008,4 +1008,324 @@ return [
         'content'    => 'Q: Is the Spine HR Suite demo free?\nA: Yes, the demo is completely free with no obligation. Our product specialists will show you the modules most relevant to your requirements and answer any questions you have.',
     ],
 
+    // ══════════════════════════════════════════════════════════════════
+    // ARCHITECTURE, DEPLOYMENT & SECURITY
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Spine HR Suite',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Is Spine HR Suite available as cloud SaaS, on-premise, or both?\nA: All three. Spine HR Suite supports On-SaaS (cloud), On-Premise, and Hybrid deployment models. Customers choose the deployment model that best suits their operational requirements and data governance policies. Spine is one of the few HRMS vendors in India offering all three options.',
+    ],
+
+    [
+        'module'     => 'Spine HR Suite',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite support multi-company, multi-branch group hierarchies?\nA: Yes. Spine HR Suite scales to support multiple companies, locations, and branches. Core HRIS allocates payroll across 35+ configurable cost centres, and the suite handles organisations from MSMEs up to 10,000+ employees without re-platforming. Spine Assets also handles workflow and approval across multiple companies, locations, and branches.',
+    ],
+
+    [
+        'module'     => 'Spine HR Suite',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: How does role-based access control (RBAC) work in Spine HR Suite?\nA: Core HRIS ships Advanced Roles & Permissions for role-based security settings. Administrators configure which modules and data each role can view or edit. Multiple admin access levels are supported with role-based permissions across all modules. The 2026 HRMS listing recognises Spine for exclusive user rights management.',
+    ],
+
+    [
+        'module'     => 'Spine HR Suite',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: What security standards protect salary and employee data in Spine HR Suite?\nA: Spine HR Suite uses encryption plus role-based access controls to protect sensitive employee data. The Employee Self Service module adds Single Sign-On (SSO) and Two-Factor Authentication (2FA). Spine Technologies also holds ISO certification and a CRISIL SME rating as operational quality assurances.',
+    ],
+
+    // ══════════════════════════════════════════════════════════════════
+    // PAYROLL PROCESSING & CALCULATIONS
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Payroll',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite handle monthly payroll processing, salary registers, and bank transfer files?\nA: Yes, end to end. Core HRIS covers High-Speed Payroll Processing, Inbuilt Bank Formats that generate bank-ready salary files for disbursal, a Multilingual Salary Register, a Payslip Designer, and flexible Journal Voucher (JV) formats by department, head, employee, or custom combination.',
+    ],
+
+    [
+        'module'     => 'Payroll',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite support retrospective increments and retroactive arrears?\nA: Yes. Arrears & Supplementary Payroll is a named Core HRIS feature. Backdated payment handling is built in so arrears and salary adjustments process without requiring a separate payroll cycle.',
+    ],
+
+    [
+        'module'     => 'Payroll',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Can Spine HR Suite handle custom salary structures and CTC formulas by employee grade?\nA: Yes. Custom Salary Structures with maker-checker approval controls are a named Core HRIS feature. Cost Centre Allocation spans 35+ configurable centres. Flexible salary structures can be configured for different employee grades and departments.',
+    ],
+
+    [
+        'module'     => 'Payroll',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite automate Full and Final Settlement (FnF)?\nA: Yes. Core HRIS lists Full & Final Settlement (FnF) as a feature that automates dues, recoveries, and payouts. The Off-Boarding module adds final settlement processing covering pending dues, reimbursements, and gratuity. The FAQ confirms automated final salary calculation including leave encashment and tax deductions.',
+    ],
+
+    // ══════════════════════════════════════════════════════════════════
+    // STATUTORY COMPLIANCE & TAXATION
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Payroll',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite support both old and new income tax regimes for TDS?\nA: Yes. The Employee Self Service module carries Investment & TDS Declarations that simplify tax planning under both the old and new tax regimes. Employees get payslip, CTC, and tax-projection visibility to compare both regimes.',
+    ],
+
+    [
+        'module'     => 'Payroll',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite calculate PF, ESIC, PT, and LWF?\nA: Yes. Core HRIS is positioned on automated PF, ESIC, PT, TDS, and LWF compliance, with built-in statutory calculations and regulatory updates. Tax tables update automatically as rates change. Spine also publishes guidance on India\'s New Labour Codes 2025.',
+    ],
+
+    [
+        'module'     => 'Payroll',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Can employees submit investment declarations and proofs through ESS?\nA: Yes. Employees submit investment declarations and TDS declarations through the Employee Self Service portal. This simplifies tax planning under both the old and new tax regimes.',
+    ],
+
+    [
+        'module'     => 'Payroll',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite stay updated with Indian Labour Codes?\nA: Yes. Spine HR Suite provides automated statutory compliance for Indian labour codes covering PF, ESI, PT, TDS, and LWF, with regulatory updates built in. Client testimonials reference built-in tax tables that update automatically as rates change. Spine publishes a standalone guide on India\'s New Labour Codes 2025.',
+    ],
+
+    // ══════════════════════════════════════════════════════════════════
+    // TIME, ATTENDANCE & ROSTERING
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Time & Attendance',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite integrate with biometric attendance devices?\nA: Yes. Biometric integration is a core feature. Attendance is captured via biometric devices, web login/logout, or batch file import, syncing with access control systems and feeding payroll in real time. Buddy-punching prevention is also built in.',
+    ],
+
+    [
+        'module'     => 'Time & Attendance',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite support geo-fencing and GPS-tagged attendance for field or remote staff?\nA: Yes. Geo-Fencing & Geo-Tagging is a named Time & Attendance feature that enables mobile-based attendance for remote teams. Employees can clock in and out from any location via the web or mobile app.',
+    ],
+
+    [
+        'module'     => 'Time & Attendance',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite support multi-shift rosters and rotational shifts?\nA: Yes. Shift Management & Roster Planning covers configurable shifts, policies, and holiday calendars, with custom shift planning adjustable to business needs. The HR Suite is positioned with full-featured shift and roster management.',
+    ],
+
+    [
+        'module'     => 'Time & Attendance',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite track overtime and comp-offs?\nA: Yes for both. OT hours tracking with approval workflows and error-free payroll sync is a named feature. Comp-off is supported as a custom leave type within the Leave Management module, earning time off in lieu of overtime worked.',
+    ],
+
+    // ══════════════════════════════════════════════════════════════════
+    // LEAVE & HOLIDAY MANAGEMENT
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Leave Management',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Can Spine HR Suite handle custom leave rules for EL, CL, SL, and Maternity?\nA: Yes. Multiple Leave Types & Policies configures accruals, carryovers, and leave categories. Custom Leave Types explicitly covers sick leave (SL), casual leave (CL), and comp-offs. The configuration model accommodates earned leave (EL) and maternity leave as well.',
+    ],
+
+    [
+        'module'     => 'Leave Management',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite support substitute approval when a reporting manager is on leave?\nA: Yes. Revoke & Substitute Leave Approvals enables controlled cancellations and alternative approvers. Multi-level and email/mobile-based approvals allow managers to act on requests remotely, ensuring no leave request gets stuck.',
+    ],
+
+    [
+        'module'     => 'Leave Management',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite provide real-time leave balance tracking?\nA: Yes. Real-time balance tracking with accruals and carryovers is confirmed. The system flags or prevents overlapping leave requests to protect staffing levels. Leave balances update instantly when requests are approved.',
+    ],
+
+    // ══════════════════════════════════════════════════════════════════
+    // EMPLOYEE SELF SERVICE (ESS) & MOBILE APP
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'ESS',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: What can employees do on the Spine mobile app?\nA: The Spine mobile app (Android and iOS) supports: dashboard and profile updates, payslip and CTC access, tax-projection viewing, investment and TDS declarations, company asset and organogram viewing, leave application and balance checks, geo-tagged attendance, expense claim submission and tracking, performance and training visibility, HR help desk ticket raising, and travel requests. Login is secured by SSO and Two-Factor Authentication.',
+    ],
+
+    [
+        'module'     => 'ESS',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Can employees view, email, or download payslips through ESS?\nA: Yes. Payslip access is available in the Employee Self Service portal. Core HRIS distributes customised multilingual payslips via email and WhatsApp. Salary registers are available in regional languages as well.',
+    ],
+
+    [
+        'module'     => 'ESS',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Can employees raise IT helpdesk or HR queries through ESS?\nA: Yes. The HR Help Desk allows employees to raise IT support requests, HR inquiries, payroll concerns, and administrative service requests in one place, with auto-routing to the right department, multi-level approvals, escalations, email/SMS notifications, real-time tracking, configurable SLAs, and post-resolution ratings.',
+    ],
+
+    [
+        'module'     => 'ESS',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite have an employee document management repository?\nA: Yes. Core HRIS provides Employee Document Management — a central repository to store, organise, and securely access employee documents. The Onboarding module takes document submission paperless via a candidate upload portal for new joiners.',
+    ],
+
+    // ══════════════════════════════════════════════════════════════════
+    // RECRUITMENT, ONBOARDING & EXIT
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Recruitment',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite have an ATS with resume parsing and job posting?\nA: Yes, a full ATS. Recruitment covers: Resume Parser for automated data extraction, AI Resume Screening that shortlists on skills, experience, and qualifications, Career Portal Integration spanning LinkedIn, Naukri, career pages, and QR-based applications, QR code employee referrals, a Vacancy Request Board, Recruitment Budgeting by role or JD, Multi-Panel Interview Mapping with structured feedback, a Hiring Dashboard, and a Dynamic Report Builder.',
+    ],
+
+    [
+        'module'     => 'Recruitment',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite automate offer letters and appointment letters?\nA: Yes. Offer letters are auto-generated and customisable, with candidates accepting or rejecting through a candidate portal. Core HRIS adds a Letter Writer producing salary, HR, and employee letters from built-in templates, plus automated document generation for offer letters and appraisals.',
+    ],
+
+    [
+        'module'     => 'Onboarding',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite support pre-boarding and paperless document submission for new hires?\nA: Yes. Pre-Onboard & Pre-Joined status tracks candidates from offer acceptance to joining. New hires upload documents through a portal for faster verification. An Employee Joining Kit provides a structured checklist. Onboarding tasks are assigned across teams with automated notifications. Candidates can also access training materials and policies before day one.',
+    ],
+
+    [
+        'module'     => 'Offboarding',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite have a digital exit workflow?\nA: Yes, fully digital. Exit Request & Approval handles resignations through a structured approval workflow with role-specific off-boarding workflows configurable by employee category. It runs through clearance sign-off, asset and document retrieval, digital exit interviews and surveys, final settlement (FnF), and resignation revocation management.',
+    ],
+
+    [
+        'module'     => 'Offboarding',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite handle no-dues clearance from IT, Admin, and Finance during exit?\nA: Yes. Clearance Sign-Off automates clearance tracking across departments and monitors pending approvals. Document & Asset Retrieval runs before the last working day. The process ensures all department sign-offs complete before the employee\'s exit is finalised.',
+    ],
+
+    // ══════════════════════════════════════════════════════════════════
+    // PERFORMANCE MANAGEMENT (PMS)
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Performance Management',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite support KRA- and KPI-based appraisals?\nA: Yes. KRAs (Key Result Areas) and KPIs (Key Performance Indicators) are the documented appraisal model — measurable goals with progress tracking, plus competency and skill assessments. Employees create and update their own goals while managers track alignment.',
+    ],
+
+    [
+        'module'     => 'Performance Management',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite support 360-degree feedback?\nA: Yes. Multi-Level Appraisal Reviews enable 360-degree feedback. The FAQ specifies multi-level input from managers, peers, and employees themselves, giving a well-rounded view of each employee\'s performance.',
+    ],
+
+    [
+        'module'     => 'Performance Management',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite include bell curve normalization for appraisals?\nA: Yes. Bell Curve Normalization is a named Performance Management feature that ensures fair, structured evaluation by distributing appraisal ratings across a defined curve.',
+    ],
+
+    [
+        'module'     => 'Performance Management',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite support continuous performance tracking and mid-year reviews?\nA: Yes. Mid-Term & Annual Performance Reviews keep appraisals continuous and data-driven, backed by a continuous feedback mechanism and automated review cycles for both mid-year and annual evaluations.',
+    ],
+
+    // ══════════════════════════════════════════════════════════════════
+    // EXPENSE, TRAVEL & ASSET MANAGEMENT
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Expense Management',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite handle travel requests and the travel desk?\nA: Yes. The Travel Desk module handles domestic and international travel requests with pre-configured eligibility rules, tour plans and multi-trip management, accommodation plus pickup-and-drop requests, special approval routing for VIP travel and policy deviations, itinerary upload with booking verification, real-time payment tracking, and post-submission modification or cancellation. MIS dashboards report travel costs, patterns, and policy deviations.',
+    ],
+
+    [
+        'module'     => 'Expense Management',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Can employees attach receipts and submit expense claims through Spine HR Suite?\nA: Yes. Employees upload receipts and submit claims through the self-service portal or mobile app, with configurable expense categories, limit-based approval against pre-defined rules, multi-currency and per-kilometre expense handling, and real-time claim status tracking.',
+    ],
+
+    [
+        'module'     => 'Spine HR Suite',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite track company asset allocation to employees?\nA: Yes. Core HRIS includes Employee Asset Management tracking employee-issued assets across their lifecycle. ESS shows employees their assigned assets. Spine Assets tracks asset status, location, and assignment, lets employees request assets through self-service with manager approval, and assigns assets to specific departments and employees for accountability.',
+    ],
+
+    [
+        'module'     => 'Offboarding',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Are unreturned assets flagged during employee exit and FnF?\nA: Yes. Off-Boarding\'s Document & Asset Retrieval tracks and retrieves company-issued assets before the last working day. Clearance tracking ensures all asset returns complete before exit, and FnF settlement processes asset recoveries alongside dues.',
+    ],
+
+    // ══════════════════════════════════════════════════════════════════
+    // INTEGRATIONS, ANALYTICS & SUPPORT
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Integrations',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: What ERP and accounting systems does Spine HR Suite integrate with?\nA: Spine HR Suite integrates with Tally, Google, Azure, and biometric systems. Core HRIS integrates salary journal vouchers with ERP systems, Expense syncs to an expense ledger and ERP, and Spine Assets syncs with accounting software. REST APIs are available for custom ERP integrations.',
+    ],
+
+    [
+        'module'     => 'Integrations',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: Does Spine HR Suite provide REST APIs for integration?\nA: Yes. Salary JV Integration connects to ERP systems through REST APIs, and Employee Master Integration synchronises employee master data across integrated business applications. Master data can also be imported from Excel and other external sources.',
+    ],
+
+    [
+        'module'     => 'Reporting',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: What MIS reports and dashboards does Spine HR Suite offer?\nA: Spine HR Suite offers 300+ ready reports with dashboards, plus a Custom Report Writer & Dashlets tool for fully customised analytics. Attendance provides graphical analysis and real-time manager dashboards. Recruitment includes a hiring dashboard and dynamic report builder. The Travel Desk has MIS dashboards for cost and policy-deviation tracking.',
+    ],
+
+    [
+        'module'     => 'Support',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: What support channels does Spine Technologies offer?\nA: Spine Technologies provides an "Octagonal Support" model with four channels: Phone on (+91) 022-42132222, Email at enq@spinetechnologies.com, a Ticket Portal at spinesupport.in, and a WhatsApp escalation line on (+91) 93201 12248 for unresolved issues. The HR Help Desk product also allows customers to define their own SLAs for internal ticket resolution.',
+    ],
+
+    [
+        'module'     => 'Support',
+        'entry_type' => 'FAQ',
+        'content'    => 'Q: What is the implementation timeline for Spine HR Suite?\nA: Spine Technologies provides comprehensive training, ease of implementation, and support from initial consultation through go-live. Timelines depend on company size, modules selected, and data migration complexity. Contact our team for a personalised implementation assessment and timeline for your organisation.',
+    ],
+
+    // ══════════════════════════════════════════════════════════════════
+    // ADDITIONAL FEATURE DETAILS
+    // ══════════════════════════════════════════════════════════════════
+
+    [
+        'module'     => 'Payroll',
+        'entry_type' => 'Feature',
+        'content'    => 'Spine HR Suite Payroll features: High-Speed Payroll Processing, Custom Salary Structures with maker-checker approval, Inbuilt Bank Formats for salary disbursal, Multilingual Salary Register (including regional languages), Payslip Designer with email and WhatsApp distribution, Arrears & Supplementary Payroll for retroactive adjustments, Full & Final Settlement automation, Loan & Advances Setup with repayment tracking, Cost Centre Allocation across 35+ configurable centres, and flexible JV formats for accounting integration.',
+    ],
+
+    [
+        'module'     => 'Time & Attendance',
+        'entry_type' => 'Feature',
+        'content'    => 'Spine HR Suite Time & Attendance features: Biometric device integration with buddy-punching prevention, Geo-Fencing & Geo-Tagging for remote/field staff mobile attendance, Shift Management & Roster Planning with configurable shift policies, Holiday Calendar management, OT Hours Tracking with approval workflows and payroll sync, Short Leave approvals, and graphical attendance analysis with real-time manager dashboards.',
+    ],
+
+    [
+        'module'     => 'Recruitment',
+        'entry_type' => 'Feature',
+        'content'    => 'Spine HR Suite Recruitment (ATS) features: AI Resume Screening for automated shortlisting by skills, experience and qualifications, Resume Parser for data extraction, Career Portal Integration with LinkedIn, Naukri, and career pages, QR-based job applications, QR code employee referrals, Vacancy Request Board, Recruitment Budgeting by role or JD, Multi-Panel Interview Mapping with structured feedback, a Hiring Dashboard, and a Dynamic Report Builder.',
+    ],
+
+    [
+        'module'     => 'Performance Management',
+        'entry_type' => 'Feature',
+        'content'    => 'Spine HR Suite Performance Management features: KRA and KPI-based appraisals with measurable goal tracking, Competency and Skill Assessments, Multi-Level Appraisal Reviews with 360-degree feedback from managers, peers, and self, Bell Curve Normalization for fair evaluation, Mid-Term and Annual Review cycles, Continuous Feedback mechanism, Succession Planning to identify high performers, and detailed performance reports that support data-driven promotion and compensation decisions.',
+    ],
+
+    [
+        'module'     => 'Spine HR Suite',
+        'entry_type' => 'Feature',
+        'content'    => 'Spine HR Suite Employee Self Service (ESS) capabilities: Dashboard and profile management, Payslip and CTC access, Tax projection under old and new regimes, Investment and TDS declaration submission, Leave application and real-time balance checking, Geo-tagged attendance via mobile, Expense claim submission with receipt upload, HR Help Desk ticket creation, Travel request submission, Company asset and organogram viewing, and secure login via SSO and Two-Factor Authentication (2FA) on both Android and iOS apps.',
+    ],
+
 ];
