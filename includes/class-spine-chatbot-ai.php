@@ -688,7 +688,11 @@ PROMPT;
                 continue;
             }
 
-            $parsed = json_decode( $raw_txt, true );
+            // Strip markdown code fences if Claude wraps the JSON
+            $clean = preg_replace( '/^```(?:json)?\s*/i', '', trim( $raw_txt ) );
+            $clean = preg_replace( '/\s*```$/', '', $clean );
+
+            $parsed = json_decode( $clean, true );
             if ( ! is_array( $parsed ) || empty( $parsed['title'] ) || empty( $parsed['content'] ) ) {
                 continue;
             }
