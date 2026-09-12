@@ -123,6 +123,21 @@ $primary      = get_option( 'spine_chatbot_primary_color',  '#0891b2' );
                         <?php endif; ?>
                     </td>
                 </tr>
+                <tr>
+                    <th><label for="spine_chatbot_anthropic_workspace_id">Anthropic Workspace ID</label></th>
+                    <td>
+                        <input type="text" id="spine_chatbot_anthropic_workspace_id"
+                               name="spine_chatbot_anthropic_workspace_id"
+                               value="<?php echo esc_attr( get_option( 'spine_chatbot_anthropic_workspace_id', '' ) ); ?>"
+                               class="large-text"
+                               autocomplete="off"
+                               placeholder="wrkspc-…">
+                        <p class="description">
+                            Optional. Found in the Anthropic Console under your workspace settings.
+                            Required if your API key is scoped to a specific workspace.
+                        </p>
+                    </td>
+                </tr>
             </table>
         </div>
 

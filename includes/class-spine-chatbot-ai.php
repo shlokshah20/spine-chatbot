@@ -20,7 +20,13 @@ defined( 'ABSPATH' ) || exit;
 
 final class Spine_Chatbot_AI {
 
-    private const MODEL      = 'claude-3-5-sonnet-20241022';
+    private const FALLBACK_MODELS = [
+        'claude-haiku-4-5-20251001',
+        'claude-sonnet-4-6',
+        'claude-3-5-haiku-latest',
+    ];
+    private const MODELS_API_URL = 'https://api.anthropic.com/v1/models';
+    private const MODEL_TRANSIENT = 'spine_chatbot_active_model';
     private const MAX_TOKENS = 1024;
     private const MAX_LOOPS  = 6;
     private const API_URL    = 'https://api.anthropic.com/v1/messages';
@@ -220,12 +226,87 @@ final class Spine_Chatbot_AI {
 
     // ── Anthropic API call ─────────────────────────────────────────────────────
 
+    // ── Dynamic model resolution ───────────────────────────────────────────────
+
+    private function get_active_model(): string {
+        $cached = get_transient( self::MODEL_TRANSIENT );
+        if ( $cached ) {
+            return $cached;
+        }
+
+        $headers = $this->build_headers();
+        $response = wp_remote_get( self::MODELS_API_URL, [
+            'timeout' => 10,
+            'headers' => $headers,
+        ] );
+
+        if ( ! is_wp_error( $response ) ) {
+            $body   = json_decode( wp_remote_retrieve_body( $response ), true );
+            $models = $body['data'] ?? [];
+            $best   = $this->select_best_model( $models );
+            if ( $best ) {
+                set_transient( self::MODEL_TRANSIENT, $best, 7 * DAY_IN_SECONDS );
+                return $best;
+            }
+        }
+
+        return self::FALLBACK_MODELS[0];
+    }
+
+    private function select_best_model( array $models ): ?string {
+        $active = array_filter( $models, static function ( $m ) {
+            $status = $m['status'] ?? 'active';
+            return $status === 'active';
+        } );
+
+        usort( $active, static function ( $a, $b ) {
+            return strcmp( $b['created_at'] ?? '', $a['created_at'] ?? '' );
+        } );
+
+        foreach ( $active as $m ) {
+            if ( str_contains( strtolower( $m['id'] ?? '' ), 'haiku' ) ) {
+                return $m['id'];
+            }
+        }
+        foreach ( $active as $m ) {
+            if ( str_contains( strtolower( $m['id'] ?? '' ), 'sonnet' ) ) {
+                return $m['id'];
+            }
+        }
+        return null;
+    }
+
+    private function get_next_fallback_model( string $current ): ?string {
+        $list = self::FALLBACK_MODELS;
+        $idx  = array_search( $current, $list, true );
+        if ( $idx === false ) {
+            return $list[0];
+        }
+        return $list[ $idx + 1 ] ?? null;
+    }
+
+    private function build_headers(): array {
+        $headers = [
+            'x-api-key'         => $this->api_key,
+            'anthropic-version' => '2023-06-01',
+            'content-type'      => 'application/json',
+        ];
+        $workspace_id = get_option( 'spine_chatbot_anthropic_workspace_id', '' );
+        if ( $workspace_id ) {
+            $headers['anthropic-workspace-id'] = $workspace_id;
+        }
+        return $headers;
+    }
+
+    // ── Anthropic API call ─────────────────────────────────────────────────────
+
     /**
      * @return array|WP_Error  Decoded response body or WP_Error on failure.
      */
-    private function call_anthropic( array $messages ): array|WP_Error {
+    private function call_anthropic( array $messages, ?string $model = null ): array|WP_Error {
+        $model   = $model ?? $this->get_active_model();
         $payload = [
-            'model'      => self::MODEL,
+            'model'      => $model,
             'max_tokens' => self::MAX_TOKENS,
             'system'     => $this->get_system_prompt(),
             'tools'      => $this->get_tool_schemas(),
@@ -234,19 +315,31 @@ final class Spine_Chatbot_AI {
 
         $response = wp_remote_post( self::API_URL, [
             'timeout' => 30,
-            'headers' => [
-                'x-api-key'         => $this->api_key,
-                'anthropic-version' => '2023-06-01',
-                'content-type'      => 'application/json',
-            ],
-            'body' => wp_json_encode( $payload ),
+            'headers' => $this->build_headers(),
+            'body'    => wp_json_encode( $payload ),
         ] );
 
         if ( is_wp_error( $response ) ) {
             return $response;
         }
 
-        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+        $status = (int) wp_remote_retrieve_response_code( $response );
+        $body   = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        // Auto-failover: model deprecated / unknown
+        if ( $status === 400 && isset( $body['error']['type'] ) && $body['error']['type'] === 'invalid_request_error' ) {
+            $msg = strtolower( $body['error']['message'] ?? '' );
+            if ( str_contains( $msg, 'model' ) ) {
+                $next = $this->get_next_fallback_model( $model );
+                if ( $next ) {
+                    delete_transient( self::MODEL_TRANSIENT );
+                    set_transient( self::MODEL_TRANSIENT, $next, 7 * DAY_IN_SECONDS );
+                    update_option( 'spine_chatbot_active_model_log', $next );
+                    error_log( "Spine Chatbot: Model '{$model}' unavailable. Auto-switching to '{$next}'." );
+                    return $this->call_anthropic( $messages, $next );
+                }
+            }
+        }
 
         if ( isset( $body['error'] ) ) {
             return new WP_Error(
@@ -262,7 +355,7 @@ final class Spine_Chatbot_AI {
 
     private function dispatch_tool( string $name, array $input, string $session_id ): mixed {
         return match ( $name ) {
-            'search_knowledge_base' => $this->tool_search_kb( $input['search_query'] ?? '' ),
+            'search_knowledge_base' => $this->tool_search_kb( $input['search_query'] ?? '', $session_id ),
             'book_product_demo'     => $this->tool_book_demo( $input, $session_id ),
             default                 => 'Unknown tool: ' . sanitize_key( $name ),
         };
@@ -270,7 +363,7 @@ final class Spine_Chatbot_AI {
 
     // ── Tool: search_knowledge_base ────────────────────────────────────────────
 
-    private function tool_search_kb( string $query ): string {
+    private function tool_search_kb( string $query, string $session_id = '' ): string {
         if ( empty( trim( $query ) ) ) {
             return 'No search query provided.';
         }
@@ -278,7 +371,7 @@ final class Spine_Chatbot_AI {
         global $wpdb;
         $table = $wpdb->prefix . 'spine_kb_entries';
 
-        // FULLTEXT search (requires InnoDB FULLTEXT index seeded at install)
+        // FULLTEXT search
         $results = $wpdb->get_results( $wpdb->prepare(
             "SELECT content, module, entry_type,
                     MATCH(content) AGAINST(%s IN NATURAL LANGUAGE MODE) AS relevance
@@ -291,7 +384,7 @@ final class Spine_Chatbot_AI {
             self::KB_LIMIT
         ) );
 
-        // LIKE fallback when FULLTEXT returns nothing (e.g. table has < 4 rows)
+        // LIKE fallback when FULLTEXT returns nothing
         if ( empty( $results ) ) {
             $like    = '%' . $wpdb->esc_like( $query ) . '%';
             $results = $wpdb->get_results( $wpdb->prepare(
@@ -305,7 +398,14 @@ final class Spine_Chatbot_AI {
         }
 
         if ( empty( $results ) ) {
-            return "No KB entries found for query: " . sanitize_text_field( $query );
+            // Log this unanswered query for cron processing
+            Spine_Chatbot_DB::log_unanswered_query( $query, $session_id, $query );
+
+            // Include agent availability so the AI can decide how to respond
+            $agents_online = ! empty( Spine_Chatbot_DB::get_online_agents() );
+            $agent_status  = $agents_online ? 'online' : 'offline';
+
+            return "NO_MATCH_FOUND_OUT_OF_KB\nAGENT_STATUS: {$agent_status}";
         }
 
         $out = "Found " . count( $results ) . " relevant knowledge base entries:\n\n";
@@ -432,9 +532,13 @@ Apply Stream 2 when the user asks about:
 **Stream 2 Rules:**
 - ALWAYS call `search_knowledge_base` before answering. Base your answer ONLY on what the tool returns — never fabricate features, pricing, or capabilities.
 - Keep answers concise (2–4 sentences) and conversational.
-- If the KB has no relevant results, say so honestly: "I don't have specific details on that right now, but our product specialists can walk you through it."
 - After answering, naturally nudge toward a demo: "Would you like to see this in action? I can arrange a free personalised demo with our product team."
 - Format responses as plain text. Avoid heavy bullet lists or markdown headers.
+
+**When `search_knowledge_base` returns `NO_MATCH_FOUND_OUT_OF_KB`:**
+- Check the AGENT_STATUS line in the tool result.
+- If AGENT_STATUS is `online`: Begin your response with exactly [HANDOVER] — e.g. "[HANDOVER] Let me connect you with a specialist who can answer that directly."
+- If AGENT_STATUS is `offline`: Reply politely that you're verifying the exact details and ask for their work email and phone number so the product team can follow up. Say something like: "I want to make sure I give you accurate information on that — our team is currently offline but I can have a specialist reach out with the full details. Could you share your work email and phone number?" Once they provide both, use the `book_product_demo` tool with `how_can_we_help` describing what they asked, and `interest_type` = "HR Suite".
 
 ---
 
@@ -521,5 +625,80 @@ PROMPT;
                 ],
             ],
         ];
+    }
+
+    // ── Cron: automated KB gap processing ─────────────────────────────────────
+
+    /**
+     * Called daily by WP-Cron. Finds frequently unanswered queries, asks
+     * Anthropic to generate candidate Q&A entries, stores them for admin review.
+     */
+    public static function process_gap_queries_cron(): void {
+        $api_key = get_option( 'spine_chatbot_anthropic_key', '' );
+        if ( empty( $api_key ) ) {
+            return;
+        }
+
+        $gaps = Spine_Chatbot_DB::get_frequent_unanswered( 2, 7 );
+        if ( empty( $gaps ) ) {
+            return;
+        }
+
+        $instance = new self(
+            new Spine_Chatbot_Leads(),
+            new Spine_Chatbot_Router()
+        );
+
+        foreach ( $gaps as $gap ) {
+            $query_text = $gap->query_text;
+
+            $prompt = "You are a knowledge base writer for Spine Technologies Pvt. Ltd., an HR software company.\n\n"
+                    . "A visitor asked: \"{$query_text}\"\n\n"
+                    . "Our knowledge base did not have an answer. Write a concise, accurate Q&A entry about this topic "
+                    . "as it relates to Spine HR Suite, Spine Assets, or HR software in general.\n\n"
+                    . "Reply ONLY with valid JSON in this exact format (no markdown, no preamble):\n"
+                    . "{\"title\": \"short question title\", \"content\": \"Q: full question\\nA: full answer\", \"confidence\": 0.85}";
+
+            $response = wp_remote_post( self::API_URL, [
+                'timeout' => 25,
+                'headers' => $instance->build_headers(),
+                'body'    => wp_json_encode( [
+                    'model'      => $instance->get_active_model(),
+                    'max_tokens' => 512,
+                    'messages'   => [
+                        [ 'role' => 'user', 'content' => $prompt ],
+                    ],
+                ] ),
+            ] );
+
+            if ( is_wp_error( $response ) ) {
+                continue;
+            }
+
+            $body    = json_decode( wp_remote_retrieve_body( $response ), true );
+            $raw_txt = '';
+            foreach ( ( $body['content'] ?? [] ) as $block ) {
+                if ( ( $block['type'] ?? '' ) === 'text' ) {
+                    $raw_txt = $block['text'] ?? '';
+                    break;
+                }
+            }
+
+            if ( empty( $raw_txt ) ) {
+                continue;
+            }
+
+            $parsed = json_decode( $raw_txt, true );
+            if ( ! is_array( $parsed ) || empty( $parsed['title'] ) || empty( $parsed['content'] ) ) {
+                continue;
+            }
+
+            Spine_Chatbot_DB::insert_kb_upgrade(
+                $query_text,
+                sanitize_text_field( $parsed['title'] ),
+                sanitize_textarea_field( $parsed['content'] ),
+                (float) ( $parsed['confidence'] ?? 0.7 )
+            );
+        }
     }
 }

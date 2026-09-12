@@ -24,8 +24,8 @@ if ( defined( 'SPINE_CHATBOT_VERSION' ) ) {
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-define( 'SPINE_CHATBOT_VERSION',        '2.1.0' );
-define( 'SPINE_CHATBOT_DB_VERSION',     '4' );
+define( 'SPINE_CHATBOT_VERSION',        '2.2.0' );
+define( 'SPINE_CHATBOT_DB_VERSION',     '5' );
 define( 'SPINE_CHATBOT_FILE',           __FILE__ );
 define( 'SPINE_CHATBOT_DIR',            plugin_dir_path( __FILE__ ) );
 define( 'SPINE_CHATBOT_URL',            plugin_dir_url( __FILE__ ) );
@@ -40,13 +40,27 @@ register_activation_hook( __FILE__, static function (): void {
     flush_rewrite_rules();
 } );
 
+register_activation_hook( __FILE__, static function (): void {
+    if ( ! wp_next_scheduled( 'spine_chatbot_process_gaps_daily' ) ) {
+        wp_schedule_event( time(), 'daily', 'spine_chatbot_process_gaps_daily' );
+    }
+} );
+
 register_deactivation_hook( __FILE__, static function (): void {
+    wp_clear_scheduled_hook( 'spine_chatbot_process_gaps_daily' );
     flush_rewrite_rules();
 } );
 
 register_uninstall_hook( __FILE__, [ 'Spine_Chatbot_DB', 'uninstall' ] );
 
 // ── Boot ───────────────────────────────────────────────────────────────────────
+// ── Cron hook ──────────────────────────────────────────────────────────────────
+add_action( 'spine_chatbot_process_gaps_daily', static function (): void {
+    if ( class_exists( 'Spine_Chatbot_AI' ) ) {
+        Spine_Chatbot_AI::process_gap_queries_cron();
+    }
+} );
+
 add_action( 'plugins_loaded', static function (): void {
     // Use a local variable so this closure always resolves files relative to
     // its own plugin directory, regardless of which copy loaded first.

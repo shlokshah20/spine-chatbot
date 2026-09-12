@@ -27,9 +27,11 @@ final class Spine_Chatbot_Admin {
 
         add_action( 'admin_menu',            [ $this, 'add_menus' ] );
         add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ] );
-        add_action( 'admin_post_spine_save_settings', [ $this, 'handle_save_settings' ] );
-        add_action( 'admin_post_spine_save_agents',   [ $this, 'handle_save_agents' ] );
-        add_action( 'admin_post_spine_export_leads',  [ $this, 'handle_export_leads' ] );
+        add_action( 'admin_post_spine_save_settings',       [ $this, 'handle_save_settings' ] );
+        add_action( 'admin_post_spine_save_agents',         [ $this, 'handle_save_agents' ] );
+        add_action( 'admin_post_spine_export_leads',        [ $this, 'handle_export_leads' ] );
+        add_action( 'wp_ajax_spine_kb_approve_upgrade',     [ $this, 'ajax_approve_kb_upgrade' ] );
+        add_action( 'wp_ajax_spine_kb_dismiss_upgrade',     [ $this, 'ajax_dismiss_kb_upgrade' ] );
     }
 
     // ── Menu registration ──────────────────────────────────────────────────────
@@ -95,6 +97,16 @@ final class Spine_Chatbot_Admin {
             'spine-chat-kb',
             [ $this, 'render_kb' ]
         );
+
+        // KB Optimization — AI-suggested entries from unanswered queries
+        add_submenu_page(
+            'spine-chat-control',
+            __( 'KB Optimization',     'spine-chatbot' ),
+            __( 'KB Optimization',     'spine-chatbot' ),
+            'manage_options',
+            'spine-chat-kb-opt',
+            [ $this, 'render_kb_optimization' ]
+        );
     }
 
     // ── Asset enqueue ──────────────────────────────────────────────────────────
@@ -106,6 +118,7 @@ final class Spine_Chatbot_Admin {
             'spine-chat_page_spine-chat-agents',
             'spine-chat_page_spine-chat-leads',
             'spine-chat_page_spine-chat-kb',
+            'spine-chat_page_spine-chat-kb-opt',
         ];
 
         if ( ! in_array( $hook, $spine_pages, true ) ) {
@@ -209,6 +222,52 @@ final class Spine_Chatbot_Admin {
         require SPINE_CHATBOT_DIR . 'admin/views/view-kb.php';
     }
 
+    public function render_kb_optimization(): void {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( esc_html__( 'Insufficient permissions.', 'spine-chatbot' ) );
+        }
+
+        $upgrades         = Spine_Chatbot_DB::get_kb_upgrades( 'pending_review' );
+        $unanswered       = Spine_Chatbot_DB::get_frequent_unanswered( 1, 30 );
+        $opt_nonce        = wp_create_nonce( 'spine_kb_opt_nonce' );
+
+        require SPINE_CHATBOT_DIR . 'admin/views/view-kb-optimization.php';
+    }
+
+    // ── AJAX: KB upgrade approve / dismiss ─────────────────────────────────────
+
+    public function ajax_approve_kb_upgrade(): void {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( 'Forbidden', 403 );
+        }
+
+        check_ajax_referer( 'spine_kb_opt_nonce', 'nonce' );
+
+        $id = absint( $_POST['id'] ?? 0 );
+        if ( ! $id ) {
+            wp_send_json_error( 'Invalid ID' );
+        }
+
+        Spine_Chatbot_DB::approve_kb_upgrade( $id );
+        wp_send_json_success( [ 'message' => 'Entry approved and added to knowledge base.' ] );
+    }
+
+    public function ajax_dismiss_kb_upgrade(): void {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( 'Forbidden', 403 );
+        }
+
+        check_ajax_referer( 'spine_kb_opt_nonce', 'nonce' );
+
+        $id = absint( $_POST['id'] ?? 0 );
+        if ( ! $id ) {
+            wp_send_json_error( 'Invalid ID' );
+        }
+
+        Spine_Chatbot_DB::update_kb_upgrade_status( $id, 'dismissed' );
+        wp_send_json_success( [ 'message' => 'Entry dismissed.' ] );
+    }
+
     // ── Form POST handlers ─────────────────────────────────────────────────────
 
     public function handle_save_settings(): void {
@@ -244,6 +303,10 @@ final class Spine_Chatbot_Admin {
         if ( ! empty( $new_key ) ) {
             update_option( 'spine_chatbot_anthropic_key', $new_key );
         }
+
+        // Workspace ID (optional)
+        $workspace_id = sanitize_text_field( wp_unslash( $_POST['spine_chatbot_anthropic_workspace_id'] ?? '' ) );
+        update_option( 'spine_chatbot_anthropic_workspace_id', $workspace_id );
 
         wp_safe_redirect( add_query_arg( [ 'page' => 'spine-chat-settings', 'saved' => '1' ], admin_url( 'admin.php' ) ) );
         exit;

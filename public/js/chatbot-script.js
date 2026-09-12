@@ -347,6 +347,9 @@
       case 'answer':
       default:
         renderMessageHTML(data.response, 'bot');
+        if (data.trigger_lead_form) {
+          showLeadForm(data.lead_form_type || 'kb_gap_fallback');
+        }
         break;
     }
 

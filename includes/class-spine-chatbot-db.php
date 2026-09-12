@@ -13,8 +13,10 @@ defined( 'ABSPATH' ) || exit;
 final class Spine_Chatbot_DB {
 
     // ── Table names (without prefix) ──────────────────────────────────────────
-    private const TABLE    = 'spine_chatbot_interactions';
-    private const KB_TABLE = 'spine_kb_entries';
+    private const TABLE           = 'spine_chatbot_interactions';
+    private const KB_TABLE        = 'spine_kb_entries';
+    private const UNANSWERED_TABLE = 'spine_chat_unanswered_queries';
+    private const KB_UPGRADES_TABLE = 'spine_chat_kb_upgrades';
 
     // ── Agent user-meta keys ───────────────────────────────────────────────────
     public const META_IS_AGENT       = 'spine_is_agent';
@@ -76,11 +78,156 @@ final class Spine_Chatbot_DB {
         ) ENGINE=InnoDB {$charset};";
         dbDelta( $sql_kb );
 
+        // ── Unanswered queries log (v5) ────────────────────────────────────
+        $unanswered_table = $wpdb->prefix . self::UNANSWERED_TABLE;
+        $sql_unanswered   = "CREATE TABLE {$unanswered_table} (
+            id           BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            session_id   VARCHAR(64)  NOT NULL DEFAULT '',
+            query_text   TEXT         NOT NULL,
+            search_terms VARCHAR(255) NOT NULL DEFAULT '',
+            status       VARCHAR(20)  NOT NULL DEFAULT 'unanswered',
+            created_at   DATETIME     NOT NULL,
+            PRIMARY KEY  (id),
+            KEY          idx_status  (status),
+            KEY          idx_created (created_at)
+        ) ENGINE=InnoDB {$charset};";
+        dbDelta( $sql_unanswered );
+
+        // ── AI-generated KB upgrade candidates (v5) ────────────────────────
+        $upgrades_table = $wpdb->prefix . self::KB_UPGRADES_TABLE;
+        $sql_upgrades   = "CREATE TABLE {$upgrades_table} (
+            id                BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            trigger_query     TEXT         NOT NULL,
+            suggested_title   VARCHAR(255) NOT NULL DEFAULT '',
+            suggested_content TEXT         NOT NULL,
+            confidence_score  FLOAT        NOT NULL DEFAULT 0,
+            status            VARCHAR(20)  NOT NULL DEFAULT 'pending_review',
+            created_at        DATETIME     NOT NULL,
+            PRIMARY KEY  (id),
+            KEY          idx_status  (status),
+            KEY          idx_created (created_at)
+        ) ENGINE=InnoDB {$charset};";
+        dbDelta( $sql_upgrades );
+
         update_option( 'spine_chatbot_db_version', SPINE_CHATBOT_DB_VERSION );
+    }
+
+    public static function unanswered_table(): string {
+        global $wpdb;
+        return $wpdb->prefix . self::UNANSWERED_TABLE;
+    }
+
+    public static function kb_upgrades_table(): string {
+        global $wpdb;
+        return $wpdb->prefix . self::KB_UPGRADES_TABLE;
+    }
+
+    // ── Unanswered query logging ───────────────────────────────────────────────
+
+    public static function log_unanswered_query( string $query_text, string $session_id = '', string $search_terms = '' ): int|false {
+        global $wpdb;
+        $ok = $wpdb->insert(
+            self::unanswered_table(),
+            [
+                'session_id'   => $session_id,
+                'query_text'   => $query_text,
+                'search_terms' => $search_terms,
+                'status'       => 'unanswered',
+                'created_at'   => current_time( 'mysql' ),
+            ],
+            [ '%s', '%s', '%s', '%s', '%s' ]
+        );
+        return $ok ? $wpdb->insert_id : false;
+    }
+
+    /**
+     * Queries that appeared >= $min_freq times in the past $days days.
+     * Groups by normalised query text (lowercased, trimmed).
+     */
+    public static function get_frequent_unanswered( int $min_freq = 2, int $days = 7 ): array {
+        global $wpdb;
+        $table  = self::unanswered_table();
+        $cutoff = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
+        return $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT LOWER(TRIM(query_text)) AS query_text,
+                        COUNT(*) AS frequency,
+                        MAX(created_at) AS last_seen
+                 FROM {$table}
+                 WHERE created_at >= %s AND status = 'unanswered'
+                 GROUP BY LOWER(TRIM(query_text))
+                 HAVING COUNT(*) >= %d
+                 ORDER BY frequency DESC
+                 LIMIT 20",
+                $cutoff,
+                $min_freq
+            )
+        );
+    }
+
+    // ── KB upgrade candidates ─────────────────────────────────────────────────
+
+    public static function insert_kb_upgrade( string $trigger_query, string $title, string $content, float $score ): int|false {
+        global $wpdb;
+        $ok = $wpdb->insert(
+            self::kb_upgrades_table(),
+            [
+                'trigger_query'    => $trigger_query,
+                'suggested_title'  => $title,
+                'suggested_content'=> $content,
+                'confidence_score' => $score,
+                'status'           => 'pending_review',
+                'created_at'       => current_time( 'mysql' ),
+            ],
+            [ '%s', '%s', '%s', '%f', '%s', '%s' ]
+        );
+        return $ok ? $wpdb->insert_id : false;
+    }
+
+    public static function get_kb_upgrades( string $status = 'pending_review' ): array {
+        global $wpdb;
+        $table = self::kb_upgrades_table();
+        return $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM {$table} WHERE status = %s ORDER BY created_at DESC",
+                $status
+            )
+        );
+    }
+
+    public static function update_kb_upgrade_status( int $id, string $status ): bool {
+        global $wpdb;
+        return (bool) $wpdb->update(
+            self::kb_upgrades_table(),
+            [ 'status' => $status ],
+            [ 'id'     => $id ],
+            [ '%s' ],
+            [ '%d' ]
+        );
+    }
+
+    public static function approve_kb_upgrade( int $id ): bool {
+        global $wpdb;
+        $row = $wpdb->get_row(
+            $wpdb->prepare( 'SELECT * FROM ' . self::kb_upgrades_table() . ' WHERE id = %d', $id )
+        );
+        if ( ! $row ) {
+            return false;
+        }
+        $inserted = self::insert_kb_entry( $row->suggested_content, 'General', 'FAQ' );
+        if ( $inserted ) {
+            self::update_kb_upgrade_status( $id, 'approved' );
+            return true;
+        }
+        return false;
     }
 
     public static function uninstall(): void {
         global $wpdb;
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        $wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . self::KB_UPGRADES_TABLE );
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        $wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . self::UNANSWERED_TABLE );
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         $wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . self::KB_TABLE );
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
